@@ -195,6 +195,13 @@
     }
     .btn-ar:hover { transform:scale(1.05); box-shadow:0 0 14px rgba(0,229,255,0.4); }
 
+    .btn-deletar {
+      background: rgba(255,112,67,0.1); border:1px solid rgba(255,112,67,0.3);
+      color:var(--orange); padding:8px 10px; border-radius:9px;
+      font-size:0.85rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;
+    }
+    .btn-deletar:hover { background:rgba(255,112,67,0.25); transform:scale(1.05); }
+
     .vazio { text-align:center; padding:36px 20px; border:2px dashed rgba(0,229,255,0.12); border-radius:16px; }
     .vazio .e { font-size:44px; margin-bottom:12px; }
     .vazio p { font-size:0.85rem; color:var(--muted); line-height:1.6; }
@@ -327,6 +334,31 @@
     .instr-item { display:flex; gap:10px; align-items:flex-start; margin-bottom:9px; font-size:0.8rem; line-height:1.4; color:var(--muted); }
     .instr-item:last-child { margin-bottom:0; }
     .instr-item .ic { font-size:15px; flex-shrink:0; }
+
+    /* ── CONTROLE DE ESCALA AR ── */
+    .escala-hud {
+      position: fixed; bottom: 130px; right: 16px; z-index: 955;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      pointer-events: all;
+    }
+    .escala-label {
+      font-size: 0.62rem; font-family: 'JetBrains Mono', monospace;
+      color: rgba(255,255,255,0.5); letter-spacing: 1px; text-align: center;
+    }
+    .escala-val {
+      font-size: 0.82rem; font-family: 'JetBrains Mono', monospace;
+      color: var(--cyan); font-weight: 700; text-align: center;
+      background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3);
+      padding: 3px 10px; border-radius: 8px; min-width: 60px;
+    }
+    .btn-escala {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; backdrop-filter: blur(8px);
+    }
+    .btn-escala:hover { background: rgba(0,229,255,0.2); border-color: rgba(0,229,255,0.4); }
 
     /* ── MODAL ── */
     .modal-ov { display:none; position:fixed; inset:0; z-index:800; background:rgba(4,8,16,0.88); backdrop-filter:blur(10px); align-items:flex-end; justify-content:center; }
@@ -668,6 +700,15 @@
       <circle cx="90" cy="90" r="2" fill="#00e5ff"/>
     </svg>
   </div>
+  <!-- Controle de escala — aparece só quando tem modelo GLB -->
+  <div class="escala-hud hud" id="escala-hud" style="display:none;">
+    <span class="escala-label">ESCALA</span>
+    <button class="btn-escala" onclick="ajustarEscala(2)">＋</button>
+    <span class="escala-val" id="escala-val">0.05</span>
+    <button class="btn-escala" onclick="ajustarEscala(0.5)">－</button>
+    <button class="btn-escala" onclick="resetEscala()" title="Reset">↺</button>
+  </div>
+
   <div class="hud hud-bot">
     <p class="instr">Aponte para o <strong>marcador impresso</strong><br>o modelo 3D aparecerá automaticamente</p>
     <div class="ctrls">
@@ -845,9 +886,12 @@ function renderProj() {
     return `<div class="card-proj">
       <div class="proj-ico" style="background:${t.c}18;border:1px solid ${t.c}33;">${t.e}</div>
       <div class="proj-info"><h3>${p.nome}</h3><p>${t.l} · ${p.data}</p></div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
         <span class="badge-off ${p.temModelo?'sim':'nao'}">${p.temModelo?(p.offline?'✓ OFFLINE':'✓ MODELO'):'SEM MODELO'}</span>
-        <button class="btn-ar" onclick="abrirAR(${i})">📷 AR</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-ar" onclick="abrirAR(${i})">📷 AR</button>
+          <button class="btn-deletar" onclick="deletarProjeto(${i})">🗑</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -937,6 +981,12 @@ async function abrirAR(idx) {
     }
   }
 
+  // Mostra controle de escala só quando tem modelo GLB
+  escalaAtual = 0.05;
+  blobUrlAtual = null;
+  document.getElementById('escala-val').textContent = '0.05';
+  document.getElementById('escala-hud').style.display = blobUrl ? 'flex' : 'none';
+
   montarCena(projetoAR, blobUrl);
 }
 
@@ -947,6 +997,7 @@ function fecharAR() {
   if(demoId){cancelAnimationFrame(demoId);demoId=null;}
   document.getElementById('demo-canvas').style.display='none';
   document.getElementById('btn-demo').className='btn-c';
+  document.getElementById('escala-hud').style.display='none';
   demoAtivo=false;
 }
 
@@ -963,8 +1014,13 @@ function fecharAR() {
 //   São apenas logs de fallback e podem ser ignorados.
 // ══════════════════════════════════════════════
 // montarCena recebe o blobUrl já pronto do IndexedDB
-// O Blob URL funciona exatamente como um arquivo local para o A-Frame
+// Usa escalaAtual para que os botões +/- funcionem remontando a cena
 function montarCena(proj, blobUrl) {
+  // Salva o blobUrl para remontar quando escala mudar
+  if (blobUrl) blobUrlAtual = blobUrl;
+
+  const s = escalaAtual;
+
   document.getElementById('ar-container').innerHTML = `
     <a-scene
       embedded
@@ -979,20 +1035,19 @@ function montarCena(proj, blobUrl) {
       style="position:fixed;inset:0;z-index:910;">
 
       <a-assets timeout="15000">
-        ${blobUrl ? `<a-asset-item id="modelo-glb" src="${blobUrl}"></a-asset-item>` : ''}
+        ${blobUrlAtual ? `<a-asset-item id="modelo-glb" src="${blobUrlAtual}"></a-asset-item>` : ''}
       </a-assets>
 
       <a-light type="ambient"     color="#ffffff" intensity="0.9"></a-light>
       <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
       <a-marker preset="hiro">
-        ${blobUrl
+        ${blobUrlAtual
           ? `<a-entity
                gltf-model="#modelo-glb"
                position="0 0 0"
-               scale="0.05 0.05 0.05"
-               rotation="-90 0 0"
-               animation="property:rotation;to:-90 360 0;loop:true;dur:9000;easing:linear">
+               scale="${s} ${s} ${s}"
+               rotation="-90 0 0">
              </a-entity>`
           : primitiva3D(proj.tipo)}
       </a-marker>
@@ -1357,6 +1412,26 @@ async function limparCache(){
 // ══════════════════════════════════════════════
 // PWA INSTALL
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// DELETAR PROJETO
+// ══════════════════════════════════════════════
+async function deletarProjeto(idx) {
+  const p = projetos[idx];
+  if (!confirm(`Deletar o projeto "${p.nome}"?`)) return;
+
+  // Remove o modelo do IndexedDB se existir
+  if (p.modeloId) {
+    try { await deletarModeloDB(p.modeloId); } catch(e) {}
+  }
+
+  // Remove da lista e salva
+  projetos.splice(idx, 1);
+  localStorage.setItem('arc_v3', JSON.stringify(projetos));
+  renderProj();
+  atualizarCache();
+  toast('🗑 Projeto deletado', 'orange');
+}
+
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pwaPrompt=e;toast('📲 App disponível para instalar','green');});
 function instalar(){
   if(pwaPrompt){pwaPrompt.prompt();pwaPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✅ App instalado!','green');pwaPrompt=null;});return;}
@@ -1364,6 +1439,45 @@ function instalar(){
   if(/iPhone|iPad/.test(ua)) alert('No Safari: toque 📤 → "Adicionar à Tela de Início"');
   else if(/Android/.test(ua)) alert('No Chrome: menu ⋮ → "Adicionar à tela inicial"');
   else alert('No Chrome Desktop: clique ⊕ na barra de endereço');
+}
+
+// ══════════════════════════════════════════════
+// CONTROLE DE ESCALA DO MODELO AR
+// ══════════════════════════════════════════════
+let escalaAtual = 0.05; // valor padrão inicial
+
+// A-Frame não permite alterar atributos da cena via DOM depois de montada.
+// A solução é salvar o blobUrl atual e remontar a cena com a nova escala.
+let blobUrlAtual = null;
+
+function ajustarEscala(fator) {
+  escalaAtual = Math.max(0.001, Math.min(50, escalaAtual * fator));
+
+  const display = escalaAtual < 0.01
+    ? escalaAtual.toFixed(4)
+    : escalaAtual < 1
+    ? escalaAtual.toFixed(3)
+    : escalaAtual.toFixed(2);
+
+  document.getElementById('escala-val').textContent = display;
+
+  // Remonta a cena com a nova escala
+  remontarComEscala();
+  toast(`📐 Escala: ${display}`, 'cyan');
+}
+
+function resetEscala() {
+  escalaAtual = 0.05;
+  document.getElementById('escala-val').textContent = '0.05';
+  remontarComEscala();
+  toast('↺ Escala resetada', 'cyan');
+}
+
+function remontarComEscala() {
+  if (!blobUrlAtual || !projetoAR) return;
+  // Remove a cena atual e remonta com nova escala
+  document.getElementById('ar-container').innerHTML = '';
+  setTimeout(() => montarCena(projetoAR, blobUrlAtual), 100);
 }
 
 // ══════════════════════════════════════════════
