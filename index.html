@@ -1072,14 +1072,25 @@ function mostrarErroCamara(erro) {
 }
 
 function fecharAR() {
+  // Para o stream guardado no container
+  const container = document.getElementById('ar-container');
+  if (container._stream) {
+    container._stream.getTracks().forEach(t => t.stop());
+    container._stream = null;
+  }
+  // Para qualquer outro stream de vídeo ativo na página
+  document.querySelectorAll('video').forEach(v => {
+    if (v.srcObject) { v.srcObject.getTracks().forEach(t => t.stop()); v.srcObject = null; }
+  });
   document.getElementById('tela-ar').classList.remove('ativo');
-  document.body.style.overflow='';
-  document.getElementById('ar-container').innerHTML='';
-  if(demoId){cancelAnimationFrame(demoId);demoId=null;}
-  document.getElementById('demo-canvas').style.display='none';
-  document.getElementById('btn-demo').className='btn-c';
-  document.getElementById('escala-hud').style.display='none';
-  demoAtivo=false;
+  document.body.style.overflow = '';
+  container.innerHTML = '';
+  if (demoId) { cancelAnimationFrame(demoId); demoId = null; }
+  document.getElementById('demo-canvas').style.display = 'none';
+  document.getElementById('btn-demo').className = 'btn-c';
+  document.getElementById('escala-hud').style.display = 'none';
+  blobUrlAtual = null;
+  demoAtivo = false;
 }
 
 // ══════════════════════════════════════════════
@@ -1096,49 +1107,69 @@ function fecharAR() {
 // ══════════════════════════════════════════════
 // montarCena recebe o blobUrl já pronto do IndexedDB
 // Usa escalaAtual para que os botões +/- funcionem remontando a cena
-function montarCena(proj, blobUrl) {
-  // Salva o blobUrl para remontar quando escala mudar
+async function montarCena(proj, blobUrl) {
   if (blobUrl) blobUrlAtual = blobUrl;
-
   const s = escalaAtual;
+  const container = document.getElementById('ar-container');
+  container.innerHTML = '';
 
-  // Limpa erros anteriores
-  document.getElementById('erro-camera-display').innerHTML = '';
+  // 1. ABRE A CÂMERA DIRETAMENTE com getUserMedia
+  // Isso resolve o problema de tela preta no Android onde o AR.js
+  // falha silenciosamente ao tentar abrir a câmera internamente.
+  let stream = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+  } catch(e) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch(e2) {
+      toast('Câmera bloqueada: ' + e2.message, 'orange');
+      return;
+    }
+  }
 
-  document.getElementById('ar-container').innerHTML = `
-    <a-scene
-      embedded
-      arjs="sourceType:webcam;
-            debugUIEnabled:false;
-            trackingMethod:best;
-            detectionMode:mono_and_matrix;
-            matrixCodeType:3x3;"
-      vr-mode-ui="enabled:false"
-      device-orientation-permission-ui="enabled:false"
-      renderer="logarithmicDepthBuffer:true; precision:medium; alpha:true;"
-      style="position:fixed;inset:0;z-index:910;">
+  // 2. CRIA VÍDEO DE FUNDO DIRETO
+  const video = document.createElement('video');
+  video.srcObject = stream;
+  video.autoplay = true;
+  video.playsInline = true;
+  video.muted = true;
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+  video.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:910;';
+  container.appendChild(video);
+  container._stream = stream;
+  toast('Câmera aberta! Aponte para o marcador', 'green');
 
-      <a-assets timeout="15000">
-        ${blobUrlAtual ? `<a-asset-item id="modelo-glb" src="${blobUrlAtual}"></a-asset-item>` : ''}
-      </a-assets>
-
-      <a-light type="ambient"     color="#ffffff" intensity="0.9"></a-light>
-      <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
-
-      <a-marker preset="hiro">
-        ${blobUrlAtual
-          ? `<a-entity
-               gltf-model="#modelo-glb"
-               position="0 0 0"
-               scale="${s} ${s} ${s}"
-               rotation="-90 0 0">
-             </a-entity>`
-          : primitiva3D(proj.tipo)}
-      </a-marker>
-
-      <a-entity camera look-controls="enabled:false"></a-entity>
-    </a-scene>`;
+  // 3. MONTA AR.JS POR CIMA do vídeo
+  await new Promise(r => setTimeout(r, 500));
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:920;';
+  const modelTag = blobUrlAtual
+    ? '<a-entity gltf-model="#modelo-glb" position="0 0 0" scale="' + s + ' ' + s + ' ' + s + '" rotation="-90 0 0"></a-entity>'
+    : primitiva3D(proj.tipo);
+  const assetTag = blobUrlAtual
+    ? '<a-asset-item id="modelo-glb" src="' + blobUrlAtual + '"></a-asset-item>'
+    : '';
+  wrap.innerHTML =
+    '<a-scene embedded' +
+    ' arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod:best; detectionMode:mono_and_matrix; matrixCodeType:3x3;"' +
+    ' vr-mode-ui="enabled:false"' +
+    ' device-orientation-permission-ui="enabled:false"' +
+    ' renderer="logarithmicDepthBuffer:true; precision:medium; alpha:true; antialias:true;"' +
+    ' style="position:fixed;inset:0;z-index:920;background:transparent;">' +
+    '<a-assets timeout="15000">' + assetTag + '</a-assets>' +
+    '<a-light type="ambient" color="#ffffff" intensity="0.9"></a-light>' +
+    '<a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>' +
+    '<a-marker preset="hiro">' + modelTag + '</a-marker>' +
+    '<a-entity camera look-controls="enabled:false"></a-entity>' +
+    '</a-scene>';
+  container.appendChild(wrap);
 }
+
 
 function primitiva3D(tipo) {
   const m = {
