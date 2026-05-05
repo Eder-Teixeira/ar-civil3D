@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
   <meta name="theme-color" content="#0a0e1a"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <title>AR Civil · Engenharia</title>
+  <title>Pedreiro Civil 3D</title>
 
   <!--
     VERSÃO PINADA E ESTÁVEL DO AR.JS + A-FRAME
@@ -396,6 +396,17 @@
     /* ── TELA AR ── */
     #tela-ar { display:none; position:fixed; inset:0; z-index:900; background:#000; }
     #tela-ar.ativo { display:block; }
+    
+    .erro-camera {
+      position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.95);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; text-align: center; color: #fff;
+    }
+    .erro-camera .ic { font-size: 60px; margin-bottom: 16px; }
+    .erro-camera h3 { font-size: 1.1rem; color: var(--orange); margin-bottom: 8px; font-weight: 700; }
+    .erro-camera p { font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 300px; margin-bottom: 12px; }
+    .erro-camera code { background: rgba(255,112,67,0.2); padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; display: block; margin: 12px 0; color: var(--orange); word-break: break-all; }
+    .btn-tentar-novamente { background: linear-gradient(135deg, var(--orange), #e64a19); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 700; cursor: pointer; margin-top: 16px; }
     .hud { position:fixed; z-index:950; pointer-events:none; }
 
     .hud-top {
@@ -456,8 +467,8 @@
 <div id="pg-projetos" class="pagina ativa">
   <header class="cabecalho">
     <div class="cab-icone">📐</div>
-    <div class="cab-texto"><h1>AR Civil</h1><p>REALIDADE AUMENTADA</p></div>
-    <div class="badge badge-cyan">v3.0</div>
+    <div class="cab-texto"><h1>Pedreiro Civil 3D</h1><p>VISUALIZAÇÃO 3D · AR</p></div>
+    <div class="badge badge-cyan">v1.0</div>
   </header>
   <div class="conteudo">
 
@@ -710,14 +721,16 @@
   </div>
 
   <div class="hud hud-bot">
-    <p class="instr">Aponte para o <strong>marcador impresso</strong><br>o modelo 3D aparecerá automaticamente</p>
+    <p class="instr" id="instr-ar">Aponte para o <strong>marcador impresso</strong><br>o modelo 3D aparecerá automaticamente</p>
     <div class="ctrls">
       <button class="btn-c" onclick="verMarcador()">🖨 MARCADOR</button>
       <button class="btn-c" id="btn-demo" onclick="togDemo()">🎮 DEMO</button>
+      <button class="btn-c" id="btn-cam-test" onclick="testarCamera()">📷 TESTAR</button>
     </div>
   </div>
   <canvas id="demo-canvas"></canvas>
   <div id="ar-container"></div>
+  <div id="erro-camera-display"></div>
 </div>
 
 <!-- ═══ TELA MARCADOR ═══ -->
@@ -938,7 +951,7 @@ async function salvar() {
         localStorage.setItem('arc_v3', JSON.stringify(projetos));
         fecharModal(); renderProj(); toast('✅ Projeto salvo com modelo!','green');
       } catch(err) {
-        console.error('[AR Civil] Erro ao salvar modelo:', err);
+        console.error('[Pedreiro Civil 3D] Erro ao salvar modelo:', err);
         toast('❌ Erro ao salvar modelo: ' + err.message, 'orange');
       }
     };
@@ -961,11 +974,27 @@ async function abrirAR(idx) {
   document.getElementById('hud-tipo').textContent = `${t.e} ${t.l.toUpperCase()} · AR`;
   document.getElementById('tela-ar').classList.add('ativo');
   document.body.style.overflow='hidden';
-  toast('⏳ Carregando modelo...');
+  toast('⏳ Abrindo câmera...');
 
-  // iOS 13+ — pedir permissão de sensores (se o browser suportar)
+  // iOS 13+ — pedir permissão de sensores
   if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
     try { await DeviceOrientationEvent.requestPermission(); } catch(e){}
+  }
+
+  // ── FORÇAR CÂMERA COM getUserMedia ANTES DO AR.JS ──
+  // Muitos dispositivos Android bloqueiam silenciosamente o AR.js.
+  // Abrindo a câmera diretamente primeiro, o sistema concede o acesso
+  // e o AR.js herda essa permissão sem falhar.
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' },
+      audio: false
+    });
+    stream.getTracks().forEach(t => t.stop());
+    toast('✅ Câmera liberada — iniciando AR...', 'green');
+  } catch(err) {
+    toast('❌ Câmera: ' + err.message, 'orange');
+    console.error('[Pedreiro Civil 3D] Câmera:', err);
   }
 
   // Carrega o modelo do IndexedDB e cria Blob URL para o A-Frame
@@ -976,8 +1005,8 @@ async function abrirAR(idx) {
       if (blobUrl) toast('✅ Modelo carregado — aponte para o marcador', 'green');
       else         toast('⚠ Modelo não encontrado — usando demonstração', 'orange');
     } catch(err) {
-      console.warn('[AR Civil] Erro ao carregar modelo:', err);
-      toast('⚠ Erro ao carregar modelo — usando demonstração', 'orange');
+      console.warn('[Pedreiro Civil 3D] Erro ao carregar modelo:', err);
+      toast('⚠ Erro ao carregar modelo', 'orange');
     }
   }
 
@@ -987,7 +1016,59 @@ async function abrirAR(idx) {
   document.getElementById('escala-val').textContent = '0.05';
   document.getElementById('escala-hud').style.display = blobUrl ? 'flex' : 'none';
 
-  montarCena(projetoAR, blobUrl);
+  // Pequeno delay para o sistema registrar a permissão antes do AR.js subir
+  setTimeout(() => montarCena(projetoAR, blobUrl), 600);
+
+  // Aguarda um pouco para o A-Frame montar e então verifica se a câmera está funcionando
+  setTimeout(() => verificarCamera(), 2000);
+}
+
+function verificarCamera() {
+  const scene = document.querySelector('#ar-container a-scene');
+  if (!scene) return;
+
+  // Tenta acessar o vídeo da câmera para confirmar
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      // Câmera funcionando — para o stream
+      stream.getTracks().forEach(track => track.stop());
+    })
+    .catch(err => {
+      // Câmera bloqueada — mostra erro detalhado
+      console.error('[Pedreiro Civil 3D] Erro de câmera:', err);
+      mostrarErroCamara(err);
+    });
+}
+
+function mostrarErroCamara(erro) {
+  const el = document.getElementById('erro-camera-display');
+  let msg = 'Câmera não disponível';
+  let detalhe = '';
+
+  if (erro.name === 'NotAllowedError') {
+    msg = '❌ Câmera bloqueada';
+    detalhe = 'Você negou permissão ou o navegador está bloqueando. Vá em Configurações → Chrome → Permissões → Câmera e ative.';
+  } else if (erro.name === 'NotFoundError') {
+    msg = '❌ Nenhuma câmera encontrada';
+    detalhe = 'O dispositivo não tem câmera ou ela não está conectada.';
+  } else if (erro.name === 'NotReadableError') {
+    msg = '❌ Câmera em uso';
+    detalhe = 'A câmera está sendo usada por outro aplicativo. Feche outros apps e tente novamente.';
+  } else if (erro.name === 'SecurityError') {
+    msg = '❌ Problema de segurança';
+    detalhe = 'O navegador não permite acesso à câmera nesta conexão. Precisa ser HTTPS.';
+  }
+
+  el.innerHTML = `
+    <div class="erro-camera">
+      <div class="ic">📷</div>
+      <h3>${msg}</h3>
+      <p>${detalhe}</p>
+      <code>${erro.name}: ${erro.message}</code>
+      <p style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:16px;">Dica: Tente o botão 🎮 DEMO para ver o modelo 3D sem câmera</p>
+      <button class="btn-tentar-novamente" onclick="fecharAR()">← VOLTAR</button>
+    </div>
+  `;
 }
 
 function fecharAR() {
@@ -1020,6 +1101,9 @@ function montarCena(proj, blobUrl) {
   if (blobUrl) blobUrlAtual = blobUrl;
 
   const s = escalaAtual;
+
+  // Limpa erros anteriores
+  document.getElementById('erro-camera-display').innerHTML = '';
 
   document.getElementById('ar-container').innerHTML = `
     <a-scene
@@ -1287,7 +1371,7 @@ function verMarcador() {
   const pad=34, cs=(s-pad*2)/8;
   const bits=[[1,1,1,1,1,1,1,1],[1,0,1,0,0,1,0,1],[1,1,0,1,1,0,1,1],[1,0,1,0,0,1,0,1],[1,0,1,0,0,1,0,1],[1,1,0,1,1,0,1,1],[1,0,1,0,0,1,0,1],[1,1,1,1,1,1,1,1]];
   bits.forEach((r,ri)=>r.forEach((b,ci)=>{ if(b) ctx.fillRect(pad+ci*cs,pad+ri*cs,cs,cs); }));
-  ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('HIRO · AR CIVIL v3',s/2,s-10);
+  ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('HIRO · PEDREIRO CIVIL 3D',s/2,s-10);
 }
 
 // ══════════════════════════════════════════════
@@ -1359,7 +1443,7 @@ function objToGlb(txt) {
   const pB=pA.byteLength, nB=nA.byteLength, uB=uA.byteLength, tot=pB+nB+uB;
   const pad4=n=>(4-n%4)%4;
   const binPad=tot+pad4(tot);
-  const json={asset:{version:'2.0',generator:'AR Civil v3'},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[{attributes:{POSITION:0,NORMAL:1,TEXCOORD_0:2},material:0,mode:4}]}],accessors:[{bufferView:0,byteOffset:0,componentType:5126,count:N,type:'VEC3',min:mn,max:mx},{bufferView:1,byteOffset:0,componentType:5126,count:N,type:'VEC3'},{bufferView:2,byteOffset:0,componentType:5126,count:N,type:'VEC2'}],bufferViews:[{buffer:0,byteOffset:0,byteLength:pB,target:34962},{buffer:0,byteOffset:pB,byteLength:nB,target:34962},{buffer:0,byteOffset:pB+nB,byteLength:uB,target:34962}],buffers:[{byteLength:binPad}],materials:[{name:'Mat',pbrMetallicRoughness:{baseColorFactor:[.55,.72,.85,1],metallicFactor:.1,roughnessFactor:.7}}]};
+  const json={asset:{version:'2.0',generator:'Pedreiro Civil 3D'},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[{attributes:{POSITION:0,NORMAL:1,TEXCOORD_0:2},material:0,mode:4}]}],accessors:[{bufferView:0,byteOffset:0,componentType:5126,count:N,type:'VEC3',min:mn,max:mx},{bufferView:1,byteOffset:0,componentType:5126,count:N,type:'VEC3'},{bufferView:2,byteOffset:0,componentType:5126,count:N,type:'VEC2'}],bufferViews:[{buffer:0,byteOffset:0,byteLength:pB,target:34962},{buffer:0,byteOffset:pB,byteLength:nB,target:34962},{buffer:0,byteOffset:pB+nB,byteLength:uB,target:34962}],buffers:[{byteLength:binPad}],materials:[{name:'Mat',pbrMetallicRoughness:{baseColorFactor:[.55,.72,.85,1],metallicFactor:.1,roughnessFactor:.7}}]};
   let js=JSON.stringify(json); while(js.length%4!==0)js+=' ';
   const jb=new TextEncoder().encode(js);
   const bi=new Uint8Array(binPad);
@@ -1432,7 +1516,7 @@ async function deletarProjeto(idx) {
   toast('🗑 Projeto deletado', 'orange');
 }
 
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pwaPrompt=e;toast('📲 App disponível para instalar','green');});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pwaPrompt=e;toast('📲 Pedreiro Civil 3D disponível para instalar','green');});
 function instalar(){
   if(pwaPrompt){pwaPrompt.prompt();pwaPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✅ App instalado!','green');pwaPrompt=null;});return;}
   const ua=navigator.userAgent;
@@ -1573,7 +1657,7 @@ function imprimirMarcador() {
         <h2>MARCADOR AR — PADRÃO HIRO</h2>
         <p>Tamanho: ${tamMarcador}×${tamMarcador} cm · Cole na prancha do projeto</p>
         <img src="${imgUrl}" />
-        <p class="info">AR Civil v3 · Compatível com AR.js · Tamanho mínimo recomendado: 8×8 cm</p>
+        <p class="info">Pedreiro Civil 3D · Compatível com AR.js · Tamanho mínimo recomendado: 8×8 cm</p>
         <br>
         <button class="no-print" onclick="window.print()" style="padding:10px 24px;background:#111;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px;">🖨 IMPRIMIR</button>
         <button class="no-print" onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px;margin-left:8px;">FECHAR</button>
@@ -1596,6 +1680,52 @@ function baixarMarcadorPNG() {
 
 // Renderiza o marcador ao entrar na aba
 const _irParaOriginal = irPara;
+
+// ══════════════════════════════════════════════
+// TESTE DIRETO DE CÂMERA
+// ══════════════════════════════════════════════
+async function testarCamera() {
+  const instr = document.getElementById('instr-ar');
+  instr.innerHTML = '⏳ <strong>Testando câmera...</strong>';
+
+  try {
+    // Testa câmera traseira diretamente
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { exact: 'environment' } },
+      audio: false
+    });
+
+    // Cria um video element para mostrar o feed direto
+    const container = document.getElementById('ar-container');
+    container.innerHTML = '';
+
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = true;
+    video.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:910;';
+    container.appendChild(video);
+
+    instr.innerHTML = '✅ <strong>Câmera funcionando!</strong> Toque em DEMO para AR';
+    toast('✅ Câmera OK! Agora tente o AR', 'green');
+
+    // Depois de 3 segundos, para o teste e remonta o AR
+    setTimeout(() => {
+      stream.getTracks().forEach(t => t.stop());
+      container.innerHTML = '';
+      if (projetoAR) {
+        instr.innerHTML = 'Aponte para o <strong>marcador impresso</strong>';
+        montarCena(projetoAR, blobUrlAtual);
+      }
+    }, 3000);
+
+  } catch(err) {
+    instr.innerHTML = '❌ <strong>Câmera bloqueada:</strong> ' + err.message;
+    toast('❌ ' + err.message, 'orange');
+    console.error('[Camera Test]', err);
+  }
+}
 
 window.addEventListener('resize',()=>{const c=document.getElementById('demo-canvas');if(demoAtivo){c.width=innerWidth;c.height=innerHeight;}});
 </script>
