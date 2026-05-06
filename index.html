@@ -398,7 +398,7 @@
     #tela-ar.ativo { display:block; }
     
     .erro-camera {
-      position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.95);
+      position: absolute; inset: 0; z-index: 960; background: rgba(0,0,0,0.92);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 20px; text-align: center; color: #fff;
     }
@@ -1026,6 +1026,7 @@ function fecharAR() {
   document.getElementById('tela-ar').classList.remove('ativo');
   document.body.style.overflow = '';
   document.getElementById('ar-container').innerHTML = '';
+  document.getElementById('erro-camera-display').innerHTML = ''; // limpa erro ao fechar
   if (demoId) { cancelAnimationFrame(demoId); demoId = null; }
   document.getElementById('demo-canvas').style.display = 'none';
   document.getElementById('btn-demo').className = 'btn-c';
