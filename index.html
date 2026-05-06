@@ -398,7 +398,7 @@
     #tela-ar.ativo { display:block; }
     
     .erro-camera {
-      position: absolute; inset: 0; z-index: 960; background: rgba(0,0,0,0.92);
+      position: fixed; inset: 0; z-index: 960; background: rgba(0,0,0,0.95);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 20px; text-align: center; color: #fff;
     }
@@ -407,7 +407,7 @@
     .erro-camera p { font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 300px; margin-bottom: 12px; }
     .erro-camera code { background: rgba(255,112,67,0.2); padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; display: block; margin: 12px 0; color: var(--orange); word-break: break-all; }
     .btn-tentar-novamente { background: linear-gradient(135deg, var(--orange), #e64a19); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 700; cursor: pointer; margin-top: 16px; }
-    .hud { position:fixed; z-index:950; pointer-events:none; }
+    .hud { position:fixed; z-index:970; pointer-events:none; }
 
     .hud-top {
       top:0; left:0; right:0;
@@ -973,6 +973,7 @@ async function abrirAR(idx) {
   document.getElementById('hud-nome').textContent = projetoAR.nome.toUpperCase();
   document.getElementById('hud-tipo').textContent = `${t.e} ${t.l.toUpperCase()} · AR`;
   document.getElementById('tela-ar').classList.add('ativo');
+  document.getElementById('erro-camera-display').innerHTML = '';
   document.body.style.overflow='hidden';
   toast('⏳ Abrindo câmera...');
 
@@ -1013,7 +1014,7 @@ async function abrirAR(idx) {
       <p>${detalhe}</p>
       <code>${erro.name}: ${erro.message}</code>
       <p style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:16px;">Dica: Tente o botão 🎮 DEMO para ver o modelo 3D sem câmera</p>
-      <button class="btn-tentar-novamente" onclick="fecharAR()">← VOLTAR</button>
+      <button class="btn-tentar-novamente" onclick="fecharAR()">✕ FECHAR E VOLTAR</button>
     </div>
   `;
 }
