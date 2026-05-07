@@ -700,23 +700,35 @@ function fecharAR(){
 function montarCena(proj,blobUrl){
   if(blobUrl) blobUrlAtual=blobUrl;
   const s=escalaAtual;
-  const assetTag=blobUrlAtual?`<a-asset-item id="modelo-glb" src="${blobUrlAtual}"></a-asset-item>`:'';
-  const modelTag=blobUrlAtual
-    ?`<a-entity gltf-model="#modelo-glb" position="0 0 0" scale="${s} ${s} ${s}" rotation="-90 0 0"></a-entity>`
-    :primitiva3D(proj.tipo);
-  document.getElementById('ar-container').innerHTML=
-    `<a-scene embedded
-       arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod:best; detectionMode:mono_and_matrix; matrixCodeType:3x3;"
-       vr-mode-ui="enabled:false"
-       device-orientation-permission-ui="enabled:false"
-       renderer="logarithmicDepthBuffer:true; precision:medium; alpha:true;"
-       style="position:fixed;inset:0;z-index:910;">
-      <a-assets timeout="15000">${assetTag}</a-assets>
-      <a-light type="ambient" color="#ffffff" intensity="0.9"></a-light>
-      <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
-      <a-marker preset="hiro">${modelTag}</a-marker>
-      <a-entity camera look-controls="enabled:false"></a-entity>
-    </a-scene>`;
+  const container=document.getElementById('ar-container');
+  container.innerHTML='';
+  
+  // Build HTML string carefully
+  let html='<a-scene embedded arjs="sourceType:webcam;debugUIEnabled:false;trackingMethod:best;detectionMode:mono_and_matrix;matrixCodeType:3x3;" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false" renderer="logarithmicDepthBuffer:true;precision:medium;alpha:true;" style="position:fixed;inset:0;z-index:910;">';
+  
+  html+='<a-assets timeout="15000">';
+  if(blobUrlAtual){
+    html+='<a-asset-item id="modelo-glb" src="'+blobUrlAtual+'"></a-asset-item>';
+  }
+  html+='</a-assets>';
+  
+  html+='<a-light type="ambient" color="#ffffff" intensity="0.9"></a-light>';
+  html+='<a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>';
+  
+  html+='<a-marker preset="hiro">';
+  
+  if(blobUrlAtual){
+    html+='<a-entity gltf-model="#modelo-glb" position="0 0 0" scale="'+s+' '+s+' '+s+'" rotation="-90 0 0"></a-entity>';
+  } else {
+    html+=primitiva3D(proj.tipo);
+  }
+  
+  html+='</a-marker>';
+  html+='<a-entity camera look-controls="enabled:false"></a-entity>';
+  html+='</a-scene>';
+  
+  container.innerHTML=html;
+  toast('🎯 AR montado - aponte o marcador','cyan');
 }
 
 // ══════════════════════════════════════════════
