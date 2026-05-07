@@ -1,498 +1,258 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
-  <meta name="theme-color" content="#0a0e1a"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <title>Pedreiro Civil 3D</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<meta name="theme-color" content="#0a0e1a"/>
+<title>Pedreiro Civil 3D</title>
+<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar-nft.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+:root{--cyan:#00e5ff;--orange:#ff7043;--green:#00e676;--bg:#070b14;--surface:#0d1526;--border:rgba(0,229,255,0.18);--muted:rgba(200,230,255,0.45);--text:#deeeff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-tap-highlight-color:transparent;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;}
 
-  <!--
-    VERSÃO PINADA E ESTÁVEL DO AR.JS + A-FRAME
-    Usando aframe 1.3.0 + AR.js 3.4.5 — combinação testada e sem conflitos.
-    O A-Frame já inclui o Three.js internamente; não importamos separadamente.
-  -->
-  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar-nft.js"></script>
+/* NAV */
+#nav-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(7,11,20,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;height:64px;padding-bottom:env(safe-area-inset-bottom,0px);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;transition:color 0.2s;}
+.nav-btn span{font-size:20px;}
+.nav-btn.ativo{color:var(--cyan);}
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+/* PÁGINAS */
+.pagina{display:none;min-height:100vh;padding-bottom:80px;position:relative;z-index:1;}
+.pagina.ativa{display:block;}
 
-    :root {
-      --cyan:   #00e5ff;
-      --orange: #ff7043;
-      --green:  #00e676;
-      --bg:     #070b14;
-      --surface:#0d1526;
-      --border: rgba(0,229,255,0.18);
-      --muted:  rgba(200,230,255,0.45);
-      --text:   #deeeff;
-    }
+/* CABEÇALHO */
+.cabecalho{display:flex;align-items:center;gap:14px;padding:28px 20px 18px;border-bottom:1px solid var(--border);}
+.cab-icone{width:44px;height:44px;flex-shrink:0;border:2px solid var(--cyan);border-radius:12px;background:rgba(0,229,255,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 18px rgba(0,229,255,0.2);}
+.cab-texto h1{font-size:1.3rem;font-weight:700;letter-spacing:2px;color:var(--cyan);}
+.cab-texto p{font-size:0.65rem;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.badge{margin-left:auto;padding:4px 10px;border-radius:20px;font-size:0.62rem;font-family:'JetBrains Mono',monospace;letter-spacing:1px;}
+.badge-cyan{background:rgba(0,229,255,0.1);border:1px solid var(--border);color:var(--cyan);}
+.badge-green{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);}
+.badge-orange{background:rgba(255,112,67,0.1);border:1px solid rgba(255,112,67,0.3);color:var(--orange);}
+.conteudo{padding:20px;}
+.label-secao{font-size:0.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:14px;}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%; font-family: 'Rajdhani', sans-serif;
-      background: var(--bg); color: var(--text);
-      overflow-x: hidden; -webkit-tap-highlight-color: transparent;
-    }
+/* COMPONENTES */
+.info-box{border-radius:12px;padding:14px 16px;font-size:0.82rem;line-height:1.55;margin-bottom:14px;}
+.info-box.cyan{background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.2);color:rgba(200,240,255,0.8);}
+.info-box.green{background:rgba(0,230,118,0.05);border:1px solid rgba(0,230,118,0.2);color:rgba(200,255,220,0.8);}
+.info-box.orange{background:rgba(255,112,67,0.06);border:1px solid rgba(255,112,67,0.25);color:rgba(255,220,200,0.8);}
+.info-box strong{color:var(--cyan);}
+.info-box.green strong{color:var(--green);}
+.info-box.orange strong{color:var(--orange);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-primary{background:linear-gradient(135deg,var(--cyan),#00aacc);color:#000;padding:12px 20px;font-size:0.95rem;}
+.btn-outline{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--text);padding:10px 16px;font-size:0.88rem;}
+.btn-full{width:100%;}
 
-    body::before {
-      content: ''; position: fixed; inset: 0; z-index: 0;
-      background-image:
-        linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
-      background-size: 36px 36px; pointer-events: none;
-    }
+/* AVISO HTTPS */
+.alerta-https{background:linear-gradient(135deg,rgba(255,112,67,0.1),rgba(255,112,67,0.05));border:2px solid rgba(255,112,67,0.4);border-radius:18px;padding:20px;margin-bottom:20px;}
+.alerta-https h3{font-size:1rem;font-weight:700;color:var(--orange);margin-bottom:8px;letter-spacing:1px;}
+.alerta-https p{font-size:0.83rem;color:rgba(255,220,200,0.8);line-height:1.55;margin-bottom:10px;}
+.https-passos{display:grid;gap:8px;}
+.https-passo{display:flex;gap:10px;align-items:flex-start;font-size:0.82rem;color:rgba(255,220,200,0.75);line-height:1.4;}
+.https-passo .num{min-width:22px;height:22px;border-radius:6px;background:rgba(255,112,67,0.15);border:1px solid rgba(255,112,67,0.3);color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
 
-    /* ── NAV ── */
-    #nav-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-      background: rgba(7,11,20,0.97); backdrop-filter: blur(16px);
-      border-top: 1px solid var(--border);
-      display: flex; height: 64px;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    .nav-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px;
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); font-family: 'JetBrains Mono', monospace;
-      font-size: 0.58rem; letter-spacing: 1px; text-transform: uppercase;
-      transition: color 0.2s;
-    }
-    .nav-btn span { font-size: 20px; }
-    .nav-btn.ativo { color: var(--cyan); }
+/* HERO */
+.hero{background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(0,229,255,0.02) 60%,rgba(255,112,67,0.04));border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden;}
+.hero::after{content:'⬡';position:absolute;right:-15px;top:-25px;font-size:130px;color:rgba(0,229,255,0.035);line-height:1;pointer-events:none;}
+.hero h2{font-size:1.45rem;font-weight:700;line-height:1.25;margin-bottom:8px;}
+.hero h2 span{color:var(--cyan);}
+.hero p{font-size:0.88rem;color:var(--muted);line-height:1.55;max-width:300px;}
 
-    /* ── PÁGINAS ── */
-    .pagina { display: none; min-height: 100vh; padding-bottom: 80px; position: relative; z-index: 1; }
-    .pagina.ativa { display: block; }
+/* STATUS REDE */
+#status-rede{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;margin-bottom:18px;font-size:0.75rem;font-family:'JetBrains Mono',monospace;}
+#status-rede.online{background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.25);color:var(--green);}
+#status-rede.offline{background:rgba(255,112,67,0.07);border:1px solid rgba(255,112,67,0.25);color:var(--orange);}
+.dot-rede{width:7px;height:7px;border-radius:50%;animation:pulsar 1.8s infinite;}
+#status-rede.online .dot-rede{background:var(--green);}
+#status-rede.offline .dot-rede{background:var(--orange);animation:none;}
 
-    /* ── COMPONENTES ── */
-    .cabecalho {
-      display: flex; align-items: center; gap: 14px;
-      padding: 28px 20px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-    .cab-icone {
-      width: 44px; height: 44px; flex-shrink: 0;
-      border: 2px solid var(--cyan); border-radius: 12px;
-      background: rgba(0,229,255,0.1);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; box-shadow: 0 0 18px rgba(0,229,255,0.2);
-    }
-    .cab-texto h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: 2px; color: var(--cyan); }
-    .cab-texto p  { font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+/* PROJETOS */
+.card-proj{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px;margin-bottom:10px;transition:all 0.2s;}
+.proj-ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.proj-info{flex:1;min-width:0;}
+.proj-info h3{font-size:0.92rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.proj-info p{font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.badge-off{font-size:0.6rem;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:6px;margin-bottom:4px;display:block;text-align:center;}
+.badge-off.sim{background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2);}
+.badge-off.nao{background:rgba(255,112,67,0.08);color:var(--orange);border:1px solid rgba(255,112,67,0.18);}
+.btn-ar{background:linear-gradient(135deg,var(--cyan),#009fcc);color:#000;border:none;padding:8px 13px;border-radius:9px;font-family:'Rajdhani',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:0.5px;flex-shrink:0;transition:all 0.2s;}
+.btn-ar:hover{transform:scale(1.05);box-shadow:0 0 14px rgba(0,229,255,0.4);}
+.btn-deletar{background:rgba(255,112,67,0.1);border:1px solid rgba(255,112,67,0.3);color:var(--orange);padding:8px 10px;border-radius:9px;font-size:0.85rem;cursor:pointer;flex-shrink:0;transition:all 0.2s;}
+.btn-deletar:hover{background:rgba(255,112,67,0.25);}
+.vazio{text-align:center;padding:36px 20px;border:2px dashed rgba(0,229,255,0.12);border-radius:16px;}
+.vazio .e{font-size:44px;margin-bottom:12px;}
+.vazio p{font-size:0.85rem;color:var(--muted);line-height:1.6;}
 
-    .badge {
-      margin-left: auto; padding: 4px 10px; border-radius: 20px;
-      font-size: 0.62rem; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px;
-    }
-    .badge-cyan   { background: rgba(0,229,255,0.1); border:1px solid var(--border); color: var(--cyan); }
-    .badge-green  { background: rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.3); color: var(--green); }
-    .badge-orange { background: rgba(255,112,67,0.1); border:1px solid rgba(255,112,67,0.3); color: var(--orange); }
+/* INTEGRAÇÃO */
+.sw-tabs{display:flex;gap:8px;margin-bottom:20px;}
+.sw-tab{flex:1;padding:10px 6px;border-radius:12px;cursor:pointer;border:2px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.2s;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.82rem;color:var(--muted);}
+.sw-tab .si{font-size:22px;}
+.sw-tab.ativa{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,0.06);}
+.painel{display:none;}
+.painel.ativo{display:block;}
+.passo-int{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:14px;margin-bottom:9px;}
+.passo-int .n{min-width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:0.82rem;color:var(--cyan);background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);}
+.passo-int strong{display:block;font-size:0.92rem;margin-bottom:3px;}
+.passo-int span{font-size:0.8rem;color:var(--muted);line-height:1.45;}
+.passo-int a{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:0.72rem;display:inline-block;margin-top:4px;}
+.conv-card{border:2px solid rgba(0,229,255,0.2);border-radius:16px;padding:20px;margin-top:8px;background:linear-gradient(135deg,rgba(0,229,255,0.04),transparent);}
+.conv-card h4{font-size:1rem;font-weight:700;color:var(--cyan);letter-spacing:1px;margin-bottom:6px;}
+.conv-card>p{font-size:0.8rem;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.drop-area{border:2px dashed rgba(0,229,255,0.2);border-radius:13px;padding:26px 16px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px;}
+.drop-area:hover,.drop-area.over{border-color:var(--cyan);background:rgba(0,229,255,0.05);}
+.drop-area .di{font-size:34px;margin-bottom:6px;}
+.drop-area p{font-size:0.8rem;color:var(--muted);}
+.drop-area strong{color:var(--cyan);}
+.prog-bar{height:6px;border-radius:3px;background:rgba(255,255,255,0.07);margin:8px 0;overflow:hidden;display:none;}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),#0088aa);width:0%;transition:width 0.4s;}
+.conv-msg{font-size:0.75rem;font-family:'JetBrains Mono',monospace;color:var(--muted);min-height:16px;margin-bottom:10px;}
 
-    .conteudo { padding: 20px; }
-    .label-secao {
-      font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase;
-      color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 14px;
-    }
+/* OFFLINE */
+.off-hero{background:linear-gradient(135deg,rgba(0,230,118,0.07),rgba(0,229,255,0.03));border:1px solid rgba(0,230,118,0.2);border-radius:18px;padding:22px;margin-bottom:20px;}
+.off-hero h2{font-size:1.25rem;font-weight:700;margin-bottom:6px;}
+.off-hero h2 span{color:var(--green);}
+.off-hero p{font-size:0.85rem;color:var(--muted);line-height:1.5;max-width:260px;}
+.inst-card{background:linear-gradient(135deg,rgba(0,229,255,0.05),transparent);border:2px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;}
+.inst-card h4{font-size:0.9rem;font-weight:700;color:var(--cyan);letter-spacing:1px;margin-bottom:12px;}
+.inst-li{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:0.82rem;line-height:1.45;}
+.inst-li .sb{min-width:24px;height:24px;border-radius:7px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.cache-card{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-bottom:12px;}
+.cache-card h4{font-size:0.82rem;font-weight:700;letter-spacing:1px;margin-bottom:12px;}
+.ci{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.8rem;}
+.ci:last-child{border-bottom:none;}
+.ci .cn{font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.ok{color:var(--green);font-weight:600;}
+.nao{color:var(--orange);font-weight:600;}
 
-    .card {
-      background: rgba(255,255,255,0.025);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px; padding: 18px; margin-bottom: 12px;
-    }
+/* MARCADOR */
+.marc-hero{background:linear-gradient(135deg,rgba(255,112,67,0.08),rgba(255,112,67,0.03) 60%,rgba(0,229,255,0.04));border:1px solid rgba(255,112,67,0.25);border-radius:20px;padding:22px;margin-bottom:20px;position:relative;overflow:hidden;}
+.marc-hero::after{content:'🖨';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:58px;opacity:.12;}
+.marc-hero h2{font-size:1.3rem;font-weight:700;margin-bottom:6px;}
+.marc-hero h2 span{color:var(--orange);}
+.marc-hero p{font-size:0.85rem;color:var(--muted);line-height:1.5;max-width:260px;}
+.marc-preview-wrap{background:#fff;border-radius:20px;padding:24px;text-align:center;margin-bottom:16px;box-shadow:0 0 40px rgba(0,229,255,0.08);}
+.marc-preview-wrap h4{color:#111;font-size:0.85rem;font-weight:700;letter-spacing:2px;margin-bottom:4px;}
+.marc-preview-wrap p{color:#666;font-size:0.75rem;margin-bottom:16px;}
+#canvas-gerador{border:3px solid #000;border-radius:2px;max-width:100%;}
+.tamanhos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.btn-tam{padding:10px 6px;border-radius:12px;cursor:pointer;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);display:flex;flex-direction:column;align-items:center;gap:3px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.88rem;color:var(--muted);transition:all 0.2s;}
+.btn-tam small{font-size:0.65rem;font-family:'JetBrains Mono',monospace;}
+.btn-tam.sel{border-color:var(--orange);color:var(--orange);background:rgba(255,112,67,0.08);}
+.marc-btns{display:grid;gap:10px;}
+.btn-imprimir{background:linear-gradient(135deg,var(--orange),#e64a19);color:#fff;border:none;padding:13px 20px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.2s;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-baixar-png{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--text);padding:12px 20px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.2s;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;}
+.instrucoes-impressao{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;margin-top:4px;}
+.instrucoes-impressao h4{font-size:0.82rem;font-weight:700;letter-spacing:1px;margin-bottom:12px;}
+.instr-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;font-size:0.8rem;line-height:1.4;color:var(--muted);}
+.instr-item:last-child{margin-bottom:0;}
+.instr-item .ic{font-size:15px;flex-shrink:0;}
 
-    .info-box {
-      border-radius: 12px; padding: 14px 16px;
-      font-size: 0.82rem; line-height: 1.55; margin-bottom: 14px;
-    }
-    .info-box.cyan   { background: rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.2); color:rgba(200,240,255,0.8); }
-    .info-box.green  { background: rgba(0,230,118,0.05); border:1px solid rgba(0,230,118,0.2); color:rgba(200,255,220,0.8); }
-    .info-box.orange { background: rgba(255,112,67,0.06); border:1px solid rgba(255,112,67,0.25); color:rgba(255,220,200,0.8); }
-    .info-box strong { color: var(--cyan); }
-    .info-box.green  strong { color: var(--green); }
-    .info-box.orange strong { color: var(--orange); }
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;z-index:800;background:rgba(4,8,16,0.88);backdrop-filter:blur(10px);align-items:flex-end;justify-content:center;}
+.modal-ov.ativo{display:flex;}
+.modal-sh{background:linear-gradient(180deg,#0d1829,#080f1e);border:1px solid var(--border);border-bottom:none;border-radius:24px 24px 0 0;padding:20px 20px 34px;width:100%;max-width:540px;animation:su 0.28s ease;max-height:92vh;overflow-y:auto;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-alca{width:40px;height:4px;background:rgba(255,255,255,0.14);border-radius:2px;margin:0 auto 18px;}
+.modal-sh h3{font-size:1.15rem;font-weight:700;color:var(--cyan);letter-spacing:1px;margin-bottom:18px;}
+.campo{margin-bottom:14px;}
+.campo label{display:block;font-size:0.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+.campo input,.campo select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:10px 13px;font-family:'Rajdhani',sans-serif;font-size:0.95rem;color:var(--text);outline:none;transition:border-color 0.2s;}
+.campo input:focus,.campo select:focus{border-color:var(--cyan);}
+.campo select option{background:#0d1829;}
+.up-area{border:2px dashed rgba(0,229,255,0.2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.up-area:hover{border-color:var(--cyan);background:rgba(0,229,255,0.04);}
+.up-area .ui{font-size:26px;margin-bottom:5px;}
+.up-area p{font-size:0.78rem;color:var(--muted);}
+.up-area strong{color:var(--cyan);}
+.tog-off{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:11px;padding:12px 14px;cursor:pointer;}
+.tog-off span{font-size:0.88rem;font-weight:600;}
+.tog-off small{font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.sw{width:42px;height:22px;border-radius:11px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.14);position:relative;transition:background 0.3s;flex-shrink:0;}
+.sw.on{background:var(--green);border-color:var(--green);}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:8px;background:#fff;transition:left 0.3s;}
+.sw.on::after{left:22px;}
+.m-btns{display:flex;gap:9px;margin-top:16px;}
+.m-cancelar{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--muted);padding:11px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;}
+.m-salvar{flex:2;background:linear-gradient(135deg,var(--cyan),#00aacc);color:#000;border:none;padding:11px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;letter-spacing:1px;}
 
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      border-radius: 11px; font-family: 'Rajdhani', sans-serif;
-      font-weight: 700; letter-spacing: 1px; cursor: pointer; border: none;
-      transition: all 0.2s;
-    }
-    .btn-primary { background: linear-gradient(135deg, var(--cyan), #00aacc); color:#000; padding:12px 20px; font-size:0.95rem; }
-    .btn-primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.4); }
-    .btn-outline { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:var(--text); padding:10px 16px; font-size:0.88rem; }
-    .btn-outline:hover { border-color: var(--border); }
-    .btn-full { width: 100%; }
+/* TELA AR */
+#tela-ar{display:none;position:fixed;inset:0;z-index:900;background:#000;}
+#tela-ar.ativo{display:block;}
+.hud{position:fixed;z-index:970;pointer-events:none;}
+.hud-top{top:0;left:0;right:0;background:linear-gradient(180deg,rgba(4,8,16,0.88),transparent);padding:16px 16px 36px;display:flex;align-items:center;gap:10px;}
+.btn-fechar{pointer-events:all;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:700;}
+.hud-nome{flex:1;}
+.hud-nome h3{font-size:0.9rem;font-weight:700;color:#fff;letter-spacing:1px;}
+.hud-nome p{font-size:0.62rem;color:rgba(255,255,255,0.5);font-family:'JetBrains Mono',monospace;}
+.hud-pill{display:flex;align-items:center;gap:5px;background:rgba(0,229,255,0.14);border:1px solid rgba(0,229,255,0.3);padding:5px 11px;border-radius:20px;}
+.hud-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulsar 1.5s infinite;}
+.hud-pill span{font-size:0.62rem;font-family:'JetBrains Mono',monospace;color:var(--cyan);letter-spacing:1px;}
+.hud-mira{top:50%;left:50%;transform:translate(-50%,-50%);width:180px;height:180px;}
+.mira-svg{width:100%;height:100%;animation:rodar 9s linear infinite;}
+@keyframes rodar{to{transform:rotate(360deg)}}
+.hud-bot{bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(4,8,16,0.9),transparent);padding:36px 16px 28px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.instr{font-size:0.8rem;color:rgba(255,255,255,0.55);text-align:center;}
+.instr strong{color:#fff;}
+.ctrls{display:flex;gap:8px;pointer-events:all;}
+.btn-c{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:8px 14px;border-radius:9px;font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px;}
+.btn-c.on{background:rgba(0,229,255,0.18);border-color:rgba(0,229,255,0.4);color:var(--cyan);}
 
-    /* ── ALERTA HTTPS (mais importante) ── */
-    .alerta-https {
-      background: linear-gradient(135deg, rgba(255,112,67,0.1), rgba(255,112,67,0.05));
-      border: 2px solid rgba(255,112,67,0.4); border-radius: 18px;
-      padding: 20px; margin-bottom: 20px;
-    }
-    .alerta-https h3 { font-size: 1rem; font-weight: 700; color: var(--orange); margin-bottom: 8px; letter-spacing: 1px; }
-    .alerta-https p  { font-size: 0.83rem; color: rgba(255,220,200,0.8); line-height: 1.55; margin-bottom: 10px; }
-    .https-passos    { display: grid; gap: 8px; }
-    .https-passo {
-      display: flex; gap: 10px; align-items: flex-start;
-      font-size: 0.82rem; color: rgba(255,220,200,0.75); line-height: 1.4;
-    }
-    .https-passo .num {
-      min-width: 22px; height: 22px; border-radius: 6px;
-      background: rgba(255,112,67,0.15); border:1px solid rgba(255,112,67,0.3);
-      color: var(--orange); font-family:'JetBrains Mono',monospace;
-      font-size:0.65rem; font-weight:700;
-      display:flex; align-items:center; justify-content:center;
-    }
+/* ESCALA */
+.escala-hud{position:fixed;bottom:130px;right:16px;z-index:975;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:all;}
+.escala-label{font-size:0.62rem;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);letter-spacing:1px;}
+.escala-val{font-size:0.82rem;font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:700;text-align:center;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);padding:3px 10px;border-radius:8px;min-width:60px;}
+.btn-escala{width:40px;height:40px;border-radius:12px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;backdrop-filter:blur(8px);}
 
-    /* ── HERO ── */
-    .hero {
-      background: linear-gradient(135deg, rgba(0,229,255,0.07), rgba(0,229,255,0.02) 60%, rgba(255,112,67,0.04));
-      border: 1px solid var(--border); border-radius: 20px;
-      padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden;
-    }
-    .hero::after { content:'⬡'; position:absolute; right:-15px; top:-25px; font-size:130px; color:rgba(0,229,255,0.035); line-height:1; pointer-events:none; }
-    .hero h2 { font-size: 1.45rem; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
-    .hero h2 span { color: var(--cyan); }
-    .hero p  { font-size: 0.88rem; color: var(--muted); line-height: 1.55; max-width: 300px; }
+#demo-canvas{display:none;position:fixed;inset:0;z-index:940;}
+#ar-container{position:fixed;inset:0;z-index:910;}
+#ar-container .a-enter-vr,#ar-container .a-enter-ar{display:none!important;}
 
-    /* ── STATUS REDE ── */
-    #status-rede {
-      display: flex; align-items: center; gap: 8px;
-      padding: 9px 14px; border-radius: 10px; margin-bottom: 18px;
-      font-size: 0.75rem; font-family:'JetBrains Mono',monospace;
-    }
-    #status-rede.online  { background:rgba(0,230,118,0.07); border:1px solid rgba(0,230,118,0.25); color:var(--green); }
-    #status-rede.offline { background:rgba(255,112,67,0.07); border:1px solid rgba(255,112,67,0.25); color:var(--orange); }
-    .dot-rede { width:7px; height:7px; border-radius:50%; animation:pulsar 1.8s infinite; }
-    #status-rede.online  .dot-rede { background:var(--green); }
-    #status-rede.offline .dot-rede { background:var(--orange); animation:none; }
+/* TELA MARCADOR */
+#tela-marc{display:none;position:fixed;inset:0;z-index:980;background:#fff;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#tela-marc.ativo{display:flex;}
+.marc-wrap{text-align:center;}
+.marc-wrap h2{color:#111;font-size:1.2rem;font-weight:700;margin-bottom:4px;}
+.marc-wrap p{color:#666;font-size:0.8rem;margin-bottom:16px;}
+#canvas-marc{border:4px solid #000;border-radius:2px;margin-bottom:14px;}
+.btn-fechar-marc{background:#111;color:#fff;border:none;padding:12px 34px;border-radius:11px;font-family:'Rajdhani',sans-serif;font-size:0.93rem;font-weight:700;cursor:pointer;letter-spacing:2px;}
 
-    /* ── PROJETOS ── */
-    .card-proj {
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
-      border-radius: 14px; padding: 14px; margin-bottom: 10px;
-      transition: all 0.2s;
-    }
-    .card-proj:hover { border-color: var(--border); }
-    .proj-ico  { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
-    .proj-info { flex:1; min-width:0; }
-    .proj-info h3 { font-size:0.92rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
-    .proj-info p  { font-size:0.72rem; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+/* TOAST */
+#toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%) translateY(14px);background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.3);backdrop-filter:blur(12px);color:var(--cyan);padding:10px 20px;border-radius:11px;font-size:0.78rem;font-family:'JetBrains Mono',monospace;z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
+#toast.v{opacity:1;transform:translateX(-50%) translateY(0);}
 
-    .badge-off { font-size:0.6rem; font-family:'JetBrains Mono',monospace; padding:2px 7px; border-radius:6px; margin-bottom:4px; display:block; text-align:center; }
-    .badge-off.sim { background:rgba(0,230,118,0.1); color:var(--green); border:1px solid rgba(0,230,118,0.2); }
-    .badge-off.nao { background:rgba(255,112,67,0.08); color:var(--orange); border:1px solid rgba(255,112,67,0.18); }
-
-    .btn-ar {
-      background: linear-gradient(135deg, var(--cyan), #009fcc);
-      color:#000; border:none; padding:8px 13px; border-radius:9px;
-      font-family:'Rajdhani',sans-serif; font-size:0.82rem; font-weight:700;
-      cursor:pointer; letter-spacing:0.5px; flex-shrink:0; transition:all 0.2s;
-    }
-    .btn-ar:hover { transform:scale(1.05); box-shadow:0 0 14px rgba(0,229,255,0.4); }
-
-    .btn-deletar {
-      background: rgba(255,112,67,0.1); border:1px solid rgba(255,112,67,0.3);
-      color:var(--orange); padding:8px 10px; border-radius:9px;
-      font-size:0.85rem; cursor:pointer; flex-shrink:0; transition:all 0.2s;
-    }
-    .btn-deletar:hover { background:rgba(255,112,67,0.25); transform:scale(1.05); }
-
-    .vazio { text-align:center; padding:36px 20px; border:2px dashed rgba(0,229,255,0.12); border-radius:16px; }
-    .vazio .e { font-size:44px; margin-bottom:12px; }
-    .vazio p { font-size:0.85rem; color:var(--muted); line-height:1.6; }
-
-    /* ── INTEGRAÇÃO ── */
-    .sw-tabs { display:flex; gap:8px; margin-bottom:20px; }
-    .sw-tab {
-      flex:1; padding:10px 6px; border-radius:12px; cursor:pointer;
-      border:2px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02);
-      display:flex; flex-direction:column; align-items:center; gap:4px;
-      transition:all 0.2s; font-family:'Rajdhani',sans-serif;
-      font-weight:700; font-size:0.82rem; color:var(--muted);
-    }
-    .sw-tab .si { font-size:22px; }
-    .sw-tab.ativa { border-color:var(--cyan); color:var(--cyan); background:rgba(0,229,255,0.06); }
-    .painel { display:none; }
-    .painel.ativo { display:block; }
-
-    .passo-int {
-      display:flex; gap:12px; align-items:flex-start;
-      background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
-      border-radius:13px; padding:14px; margin-bottom:9px;
-    }
-    .passo-int .n {
-      min-width:32px; height:32px; border-radius:9px;
-      display:flex; align-items:center; justify-content:center;
-      font-family:'JetBrains Mono',monospace; font-weight:700; font-size:0.82rem;
-      color:var(--cyan); background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.3);
-    }
-    .passo-int strong { display:block; font-size:0.92rem; margin-bottom:3px; }
-    .passo-int span   { font-size:0.8rem; color:var(--muted); line-height:1.45; }
-    .passo-int a      { color:var(--cyan); font-family:'JetBrains Mono',monospace; font-size:0.72rem; display:inline-block; margin-top:4px; }
-
-    /* ── CONVERSOR ── */
-    .conv-card {
-      border:2px solid rgba(0,229,255,0.2); border-radius:16px; padding:20px; margin-top:8px;
-      background:linear-gradient(135deg,rgba(0,229,255,0.04),transparent);
-    }
-    .conv-card h4 { font-size:1rem; font-weight:700; color:var(--cyan); letter-spacing:1px; margin-bottom:6px; }
-    .conv-card > p { font-size:0.8rem; color:var(--muted); margin-bottom:14px; line-height:1.5; }
-
-    .drop-area {
-      border:2px dashed rgba(0,229,255,0.2); border-radius:13px;
-      padding:26px 16px; text-align:center; cursor:pointer; transition:all 0.2s; margin-bottom:12px;
-    }
-    .drop-area:hover, .drop-area.over { border-color:var(--cyan); background:rgba(0,229,255,0.05); }
-    .drop-area .di { font-size:34px; margin-bottom:6px; }
-    .drop-area p { font-size:0.8rem; color:var(--muted); }
-    .drop-area strong { color:var(--cyan); }
-
-    .prog-bar  { height:6px; border-radius:3px; background:rgba(255,255,255,0.07); margin:8px 0; overflow:hidden; display:none; }
-    .prog-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--cyan),#0088aa); width:0%; transition:width 0.4s; }
-    .conv-msg  { font-size:0.75rem; font-family:'JetBrains Mono',monospace; color:var(--muted); min-height:16px; margin-bottom:10px; }
-
-    /* ── OFFLINE ── */
-    .off-hero {
-      background:linear-gradient(135deg,rgba(0,230,118,0.07),rgba(0,229,255,0.03));
-      border:1px solid rgba(0,230,118,0.2); border-radius:18px; padding:22px; margin-bottom:20px;
-    }
-    .off-hero h2 { font-size:1.25rem; font-weight:700; margin-bottom:6px; }
-    .off-hero h2 span { color:var(--green); }
-    .off-hero p { font-size:0.85rem; color:var(--muted); line-height:1.5; max-width:260px; }
-
-    .inst-card { background:linear-gradient(135deg,rgba(0,229,255,0.05),transparent); border:2px solid var(--border); border-radius:16px; padding:20px; margin-bottom:18px; }
-    .inst-card h4 { font-size:0.9rem; font-weight:700; color:var(--cyan); letter-spacing:1px; margin-bottom:12px; }
-    .inst-li { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; font-size:0.82rem; line-height:1.45; }
-    .inst-li .sb { min-width:24px; height:24px; border-radius:7px; background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.3); color:var(--cyan); font-family:'JetBrains Mono',monospace; font-size:0.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
-
-    .cache-card { background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px; margin-bottom:12px; }
-    .cache-card h4 { font-size:0.82rem; font-weight:700; letter-spacing:1px; margin-bottom:12px; }
-    .ci { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.8rem; }
-    .ci:last-child { border-bottom:none; }
-    .ci .cn { font-family:'JetBrains Mono',monospace; color:var(--muted); }
-    .ok  { color:var(--green); font-weight:600; }
-    .nao { color:var(--orange); font-weight:600; }
-
-    /* ── GERADOR DE MARCADOR ── */
-    .marc-hero {
-      background: linear-gradient(135deg, rgba(255,112,67,0.08), rgba(255,112,67,0.03) 60%, rgba(0,229,255,0.04));
-      border: 1px solid rgba(255,112,67,0.25); border-radius: 20px;
-      padding: 22px; margin-bottom: 20px; position: relative; overflow: hidden;
-    }
-    .marc-hero::after { content:'🖨'; position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:58px; opacity:.12; }
-    .marc-hero h2 { font-size:1.3rem; font-weight:700; margin-bottom:6px; }
-    .marc-hero h2 span { color:var(--orange); }
-    .marc-hero p { font-size:0.85rem; color:var(--muted); line-height:1.5; max-width:260px; }
-
-    .marc-preview-wrap {
-      background: #fff; border-radius: 20px;
-      padding: 24px; text-align: center; margin-bottom: 16px;
-      box-shadow: 0 0 40px rgba(0,229,255,0.08);
-    }
-    .marc-preview-wrap h4 { color:#111; font-size:0.85rem; font-weight:700; letter-spacing:2px; margin-bottom:4px; }
-    .marc-preview-wrap p  { color:#666; font-size:0.75rem; margin-bottom:16px; }
-    #canvas-gerador { border: 3px solid #000; border-radius: 2px; max-width:100%; }
-
-    .tamanhos { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-    .btn-tam {
-      padding:10px 6px; border-radius:12px; cursor:pointer;
-      border:2px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03);
-      display:flex; flex-direction:column; align-items:center; gap:3px;
-      font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.88rem;
-      color:var(--muted); transition:all 0.2s;
-    }
-    .btn-tam small { font-size:0.65rem; font-family:'JetBrains Mono',monospace; }
-    .btn-tam.sel { border-color:var(--orange); color:var(--orange); background:rgba(255,112,67,0.08); }
-    .marc-btns { display:grid; gap:10px; }
-    .btn-imprimir {
-      background: linear-gradient(135deg, var(--orange), #e64a19);
-      color:#fff; border:none; padding:13px 20px; border-radius:11px;
-      font-family:'Rajdhani',sans-serif; font-size:1rem; font-weight:700;
-      cursor:pointer; letter-spacing:1px; transition:all 0.2s; width:100%;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-    }
-    .btn-imprimir:hover { box-shadow:0 0 20px rgba(255,112,67,0.45); }
-    .btn-baixar-png {
-      background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12);
-      color:var(--text); padding:12px 20px; border-radius:11px;
-      font-family:'Rajdhani',sans-serif; font-size:0.95rem; font-weight:700;
-      cursor:pointer; letter-spacing:1px; transition:all 0.2s; width:100%;
-      display:flex; align-items:center; justify-content:center; gap:8px;
-    }
-    .btn-baixar-png:hover { border-color:var(--border); }
-
-    .instrucoes-impressao {
-      background: rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
-      border-radius:14px; padding:16px; margin-top:4px;
-    }
-    .instrucoes-impressao h4 { font-size:0.82rem; font-weight:700; letter-spacing:1px; margin-bottom:12px; }
-    .instr-item { display:flex; gap:10px; align-items:flex-start; margin-bottom:9px; font-size:0.8rem; line-height:1.4; color:var(--muted); }
-    .instr-item:last-child { margin-bottom:0; }
-    .instr-item .ic { font-size:15px; flex-shrink:0; }
-
-    /* ── CONTROLE DE ESCALA AR ── */
-    .escala-hud {
-      position: fixed; bottom: 130px; right: 16px; z-index: 955;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      pointer-events: all;
-    }
-    .escala-label {
-      font-size: 0.62rem; font-family: 'JetBrains Mono', monospace;
-      color: rgba(255,255,255,0.5); letter-spacing: 1px; text-align: center;
-    }
-    .escala-val {
-      font-size: 0.82rem; font-family: 'JetBrains Mono', monospace;
-      color: var(--cyan); font-weight: 700; text-align: center;
-      background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3);
-      padding: 3px 10px; border-radius: 8px; min-width: 60px;
-    }
-    .btn-escala {
-      width: 40px; height: 40px; border-radius: 12px;
-      background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
-      color: #fff; font-size: 20px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s; backdrop-filter: blur(8px);
-    }
-    .btn-escala:hover { background: rgba(0,229,255,0.2); border-color: rgba(0,229,255,0.4); }
-
-    /* ── MODAL ── */
-    .modal-ov { display:none; position:fixed; inset:0; z-index:800; background:rgba(4,8,16,0.88); backdrop-filter:blur(10px); align-items:flex-end; justify-content:center; }
-    .modal-ov.ativo { display:flex; }
-    .modal-sh { background:linear-gradient(180deg,#0d1829,#080f1e); border:1px solid var(--border); border-bottom:none; border-radius:24px 24px 0 0; padding:20px 20px 34px; width:100%; max-width:540px; animation:su 0.28s ease; max-height:92vh; overflow-y:auto; }
-    @keyframes su { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    .sh-alca { width:40px; height:4px; background:rgba(255,255,255,0.14); border-radius:2px; margin:0 auto 18px; }
-    .modal-sh h3 { font-size:1.15rem; font-weight:700; color:var(--cyan); letter-spacing:1px; margin-bottom:18px; }
-
-    .campo { margin-bottom:14px; }
-    .campo label { display:block; font-size:0.68rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-bottom:6px; }
-    .campo input, .campo select { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:11px; padding:10px 13px; font-family:'Rajdhani',sans-serif; font-size:0.95rem; color:var(--text); outline:none; transition:border-color 0.2s; }
-    .campo input:focus, .campo select:focus { border-color:var(--cyan); }
-    .campo select option { background:#0d1829; }
-
-    .up-area { border:2px dashed rgba(0,229,255,0.2); border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:all 0.2s; }
-    .up-area:hover { border-color:var(--cyan); background:rgba(0,229,255,0.04); }
-    .up-area .ui { font-size:26px; margin-bottom:5px; }
-    .up-area p { font-size:0.78rem; color:var(--muted); }
-    .up-area strong { color:var(--cyan); }
-
-    .tog-off { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:11px; padding:12px 14px; cursor:pointer; }
-    .tog-off span { font-size:0.88rem; font-weight:600; }
-    .tog-off small { font-size:0.72rem; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-    .sw { width:42px; height:22px; border-radius:11px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.14); position:relative; transition:background 0.3s; flex-shrink:0; }
-    .sw.on { background:var(--green); border-color:var(--green); }
-    .sw::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:8px; background:#fff; transition:left 0.3s; }
-    .sw.on::after { left:22px; }
-
-    .m-btns { display:flex; gap:9px; margin-top:16px; }
-    .m-cancelar { flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--muted); padding:11px; border-radius:11px; font-family:'Rajdhani',sans-serif; font-size:0.95rem; font-weight:600; cursor:pointer; }
-    .m-salvar   { flex:2; background:linear-gradient(135deg,var(--cyan),#00aacc); color:#000; border:none; padding:11px; border-radius:11px; font-family:'Rajdhani',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer; letter-spacing:1px; transition:all 0.2s; }
-    .m-salvar:hover { box-shadow:0 0 18px rgba(0,229,255,0.4); }
-
-    /* ── TELA AR ── */
-    #tela-ar { display:none; position:fixed; inset:0; z-index:900; background:#000; }
-    #tela-ar.ativo { display:block; }
-    
-    .erro-camera {
-      position: fixed; inset: 0; z-index: 960; background: rgba(0,0,0,0.95);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 20px; text-align: center; color: #fff;
-    }
-    .erro-camera .ic { font-size: 60px; margin-bottom: 16px; }
-    .erro-camera h3 { font-size: 1.1rem; color: var(--orange); margin-bottom: 8px; font-weight: 700; }
-    .erro-camera p { font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 300px; margin-bottom: 12px; }
-    .erro-camera code { background: rgba(255,112,67,0.2); padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; display: block; margin: 12px 0; color: var(--orange); word-break: break-all; }
-    .btn-tentar-novamente { background: linear-gradient(135deg, var(--orange), #e64a19); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-family: 'Rajdhani', sans-serif; font-weight: 700; cursor: pointer; margin-top: 16px; }
-    .hud { position:fixed; z-index:970; pointer-events:none; }
-
-    .hud-top {
-      top:0; left:0; right:0;
-      background:linear-gradient(180deg,rgba(4,8,16,0.88),transparent);
-      padding:16px 16px 36px; display:flex; align-items:center; gap:10px;
-    }
-    .btn-fechar { pointer-events:all; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
-    .hud-nome { flex:1; }
-    .hud-nome h3 { font-size:0.9rem; font-weight:700; color:#fff; letter-spacing:1px; }
-    .hud-nome p  { font-size:0.62rem; color:rgba(255,255,255,0.5); font-family:'JetBrains Mono',monospace; }
-    .hud-pill { display:flex; align-items:center; gap:5px; background:rgba(0,229,255,0.14); border:1px solid rgba(0,229,255,0.3); padding:5px 11px; border-radius:20px; }
-    .hud-pill .dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); animation:pulsar 1.5s infinite; }
-    .hud-pill span { font-size:0.62rem; font-family:'JetBrains Mono',monospace; color:var(--cyan); letter-spacing:1px; }
-
-    .hud-mira { top:50%; left:50%; transform:translate(-50%,-50%); width:180px; height:180px; }
-    .mira-svg { width:100%; height:100%; animation:rodar 9s linear infinite; }
-    @keyframes rodar { to{transform:rotate(360deg)} }
-
-    .hud-bot {
-      bottom:0; left:0; right:0;
-      background:linear-gradient(0deg,rgba(4,8,16,0.9),transparent);
-      padding:36px 16px 28px; display:flex; flex-direction:column; align-items:center; gap:10px;
-    }
-    .instr { font-size:0.8rem; color:rgba(255,255,255,0.55); text-align:center; }
-    .instr strong { color:#fff; }
-    .ctrls { display:flex; gap:8px; pointer-events:all; }
-    .btn-c { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18); color:#fff; padding:8px 14px; border-radius:9px; font-family:'Rajdhani',sans-serif; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; letter-spacing:0.5px; }
-    .btn-c:hover { background:rgba(255,255,255,0.16); }
-    .btn-c.on { background:rgba(0,229,255,0.18); border-color:rgba(0,229,255,0.4); color:var(--cyan); }
-
-    #demo-canvas { display:none; position:fixed; inset:0; z-index:940; }
-    #ar-container { position:fixed; inset:0; z-index:910; }
-
-    /* Esconde os elementos internos do A-Frame/AR.js que causam conflito visual */
-    #ar-container .a-enter-vr,
-    #ar-container .a-enter-ar { display:none !important; }
-
-    /* ── MARCADOR ── */
-    #tela-marc { display:none; position:fixed; inset:0; z-index:980; background:#fff; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
-    #tela-marc.ativo { display:flex; }
-    .marc-wrap { text-align:center; }
-    .marc-wrap h2 { color:#111; font-size:1.2rem; font-weight:700; margin-bottom:4px; }
-    .marc-wrap p  { color:#666; font-size:0.8rem; margin-bottom:16px; }
-    #canvas-marc { border:4px solid #000; border-radius:2px; margin-bottom:14px; }
-    .btn-fechar-marc { background:#111; color:#fff; border:none; padding:12px 34px; border-radius:11px; font-family:'Rajdhani',sans-serif; font-size:0.93rem; font-weight:700; cursor:pointer; letter-spacing:2px; }
-
-    /* ── TOAST ── */
-    #toast { position:fixed; bottom:86px; left:50%; transform:translateX(-50%) translateY(14px); background:rgba(0,229,255,0.1); border:1px solid rgba(0,229,255,0.3); backdrop-filter:blur(12px); color:var(--cyan); padding:10px 20px; border-radius:11px; font-size:0.78rem; font-family:'JetBrains Mono',monospace; z-index:9999; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; }
-    #toast.v { opacity:1; transform:translateX(-50%) translateY(0); }
-
-    @keyframes pulsar { 0%,100%{opacity:1} 50%{opacity:0.25} }
-  </style>
+@keyframes pulsar{0%,100%{opacity:1}50%{opacity:0.25}}
+</style>
 </head>
 <body>
 
-<!-- ═══ PG 1: PROJETOS ═══ -->
+<!-- PG 1: PROJETOS -->
 <div id="pg-projetos" class="pagina ativa">
   <header class="cabecalho">
-    <div class="cab-icone">📐</div>
+    <div class="cab-icone">🏗</div>
     <div class="cab-texto"><h1>Pedreiro Civil 3D</h1><p>VISUALIZAÇÃO 3D · AR</p></div>
     <div class="badge badge-cyan">v1.0</div>
   </header>
   <div class="conteudo">
-
-    <!-- AVISO HTTPS — aparece quando aberto via file:// -->
     <div class="alerta-https" id="aviso-https" style="display:none;">
       <h3>⚠ CÂMERA REQUER HTTPS</h3>
-      <p>Para o AR funcionar, o arquivo precisa ser aberto via HTTPS (não pelo sistema de arquivos). Escolha uma das opções:</p>
+      <p>Para o AR funcionar, abra via HTTPS. Use o Netlify Drop:</p>
       <div class="https-passos">
-        <div class="https-passo"><div class="num">1</div><span><strong>Netlify Drop (mais fácil):</strong> Acesse <strong>app.netlify.com/drop</strong> no PC, arraste o arquivo HTML e em segundos você terá um link HTTPS para abrir no celular.</span></div>
-        <div class="https-passo"><div class="num">2</div><span><strong>Google Drive:</strong> Faça upload para o Drive, abra o arquivo, clique em "Abrir com Google Docs" não funciona — use o Netlify Drop.</span></div>
-        <div class="https-passo"><div class="num">3</div><span><strong>No PC com Python:</strong> Abra o terminal na pasta do arquivo e rode <code style="background:rgba(255,112,67,0.15);padding:1px 5px;border-radius:4px;font-size:0.75rem;">python -m http.server 8080</code> e acesse pelo celular em <code style="background:rgba(255,112,67,0.15);padding:1px 5px;border-radius:4px;font-size:0.75rem;">http://SEU-IP:8080</code></span></div>
+        <div class="https-passo"><div class="num">1</div><span>Acesse <strong>app.netlify.com/drop</strong> no PC</span></div>
+        <div class="https-passo"><div class="num">2</div><span>Arraste o arquivo HTML</span></div>
+        <div class="https-passo"><div class="num">3</div><span>Abra o link gerado no celular</span></div>
       </div>
     </div>
-
     <div class="hero">
       <h2>Visualize projetos <span>em 3D</span> no campo</h2>
       <p>Aponte a câmera para o marcador impresso e veja o modelo ganhar vida em AR.</p>
     </div>
-
-    <div id="status-rede" class="online">
-      <div class="dot-rede"></div>
-      <span id="status-txt">ONLINE</span>
-    </div>
-
+    <div id="status-rede" class="online"><div class="dot-rede"></div><span id="status-txt">ONLINE</span></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <p class="label-secao" style="margin-bottom:0">Meus projetos</p>
       <button class="btn btn-primary" style="padding:8px 14px;font-size:0.8rem;" onclick="abrirModal()">＋ NOVO</button>
@@ -501,7 +261,7 @@
   </div>
 </div>
 
-<!-- ═══ PG 2: INTEGRAÇÃO ═══ -->
+<!-- PG 2: INTEGRAÇÃO -->
 <div id="pg-integracao" class="pagina">
   <header class="cabecalho">
     <div class="cab-icone">🔗</div>
@@ -509,40 +269,28 @@
     <div class="badge badge-orange">GUIA</div>
   </header>
   <div class="conteudo">
-
-    <div class="info-box cyan">O app usa o formato <strong>.GLB</strong> (glTF 2.0). Use este guia para exportar do seu software e o conversor abaixo para transformar em GLB.</div>
-
+    <div class="info-box cyan">O app usa o formato <strong>.GLB</strong> (glTF 2.0). Use este guia para exportar do seu software.</div>
     <div class="sw-tabs">
       <div class="sw-tab ativa" onclick="trocarSW(this,'revit')"><span class="si">🏗</span>Revit/BIM</div>
       <div class="sw-tab" onclick="trocarSW(this,'autocad')"><span class="si">📐</span>AutoCAD</div>
       <div class="sw-tab" onclick="trocarSW(this,'outros')"><span class="si">📦</span>Outros</div>
     </div>
-
     <div id="p-revit" class="painel ativo">
-      <div class="passo-int"><div class="n">01</div><div><strong>Plugin RvtGLTF</strong><span>Instale o plugin gratuito para exportar diretamente do Revit em formato GLB.</span><a href="https://github.com/wallabyway/RvtGLTF/releases" target="_blank">↗ github.com/wallabyway/RvtGLTF</a></div></div>
-      <div class="passo-int"><div class="n">02</div><div><strong>Configure a vista 3D</strong><span>Abra o modelo RVT, crie uma vista 3D específica para AR. Recomende simplificar a geometria para melhor desempenho no celular.</span></div></div>
-      <div class="passo-int"><div class="n">03</div><div><strong>Exporte como GLB</strong><span>No menu Complementos → RvtGLTF → Export. Escolha formato <strong>GLB (binário)</strong>. O arquivo está pronto para importar no app.</span></div></div>
-      <div class="passo-int"><div class="n">04</div><div><strong>Alternativa: via Autodesk Viewer</strong><span>Faça upload no viewer.autodesk.com, exporte como OBJ e use o conversor abaixo.</span><a href="https://viewer.autodesk.com" target="_blank">↗ viewer.autodesk.com</a></div></div>
-      <div class="info-box green"><strong>Dica de escala:</strong> Exporte apenas uma parte (um pavimento, fachada). Modelos menores são mais fluidos na câmera AR.</div>
+      <div class="passo-int"><div class="n">01</div><div><strong>Plugin RvtGLTF</strong><span>Instale o plugin gratuito para exportar do Revit em GLB.</span><a href="https://github.com/wallabyway/RvtGLTF/releases" target="_blank">↗ github.com/wallabyway/RvtGLTF</a></div></div>
+      <div class="passo-int"><div class="n">02</div><div><strong>Configure a vista 3D</strong><span>Crie uma vista 3D específica para AR. Simplifique a geometria para melhor desempenho.</span></div></div>
+      <div class="passo-int"><div class="n">03</div><div><strong>Exporte como GLB</strong><span>Complementos → RvtGLTF → Export → formato <strong>GLB (binário)</strong>.</span></div></div>
     </div>
-
     <div id="p-autocad" class="painel">
-      <div class="passo-int"><div class="n">01</div><div><strong>Exporte como OBJ</strong><span>AutoCAD 2021+: Arquivo → Exportar → Outros Formatos → OBJ. Versões antigas: use ACISOUT para SAT e converta com FBX Converter.</span></div></div>
-      <div class="passo-int"><div class="n">02</div><div><strong>Apenas geometria 3D</strong><span>O AutoCAD exporta apenas sólidos e superfícies 3D. Garanta que seu modelo tem elementos 3D (sólidos ACIS, meshes) e não apenas linhas 2D.</span></div></div>
-      <div class="passo-int"><div class="n">03</div><div><strong>Use o conversor abaixo</strong><span>Após exportar o .OBJ, converta para .GLB direto no celular com o conversor embutido — sem internet, sem servidor.</span></div></div>
-      <div class="info-box orange"><strong>Atenção à escala:</strong> AutoCAD usa milímetros por padrão. O modelo pode aparecer muito pequeno na AR. Ao cadastrar o projeto, ajuste a escala se necessário.</div>
+      <div class="passo-int"><div class="n">01</div><div><strong>Exporte como OBJ</strong><span>AutoCAD 2021+: Arquivo → Exportar → Outros Formatos → OBJ.</span></div></div>
+      <div class="passo-int"><div class="n">02</div><div><strong>Use o conversor abaixo</strong><span>Converta o .OBJ para .GLB direto no celular — sem internet.</span></div></div>
     </div>
-
     <div id="p-outros" class="painel">
-      <div class="passo-int"><div class="n">✦</div><div><strong>ArchiCAD 25+</strong><span>Arquivo → Salvar como → glTF (.glb). Exporta GLB nativamente, sem plugins.</span></div></div>
-      <div class="passo-int"><div class="n">✦</div><div><strong>SketchUp</strong><span>Extensão "glTF Export" na Extension Warehouse. Preserva bem os materiais.</span><a href="https://extensions.sketchup.com" target="_blank">↗ extensions.sketchup.com</a></div></div>
-      <div class="passo-int"><div class="n">✦</div><div><strong>Blender (gratuito)</strong><span>Importa qualquer .OBJ, .FBX ou .DXF. Exporte via Arquivo → Exportar → glTF 2.0 (.glb). Solução universal.</span><a href="https://www.blender.org" target="_blank">↗ blender.org</a></div></div>
+      <div class="passo-int"><div class="n">✦</div><div><strong>ArchiCAD 25+</strong><span>Arquivo → Salvar como → glTF (.glb). Exporta nativamente.</span></div></div>
+      <div class="passo-int"><div class="n">✦</div><div><strong>Blender (gratuito)</strong><span>Importa OBJ/FBX/DXF. Exporta via Arquivo → Exportar → glTF 2.0.</span><a href="https://www.blender.org" target="_blank">↗ blender.org</a></div></div>
     </div>
-
-    <!-- CONVERSOR OBJ→GLB -->
     <div class="conv-card">
       <h4>⚡ CONVERSOR OBJ → GLB</h4>
-      <p>Converta seu .OBJ do AutoCAD/Revit direto aqui, sem internet.</p>
+      <p>Converta seu .OBJ direto aqui, sem internet.</p>
       <div class="drop-area" id="drop-obj" onclick="document.getElementById('inp-obj').click()" ondragover="dov(event)" ondragleave="this.classList.remove('over')" ondrop="dop(event)">
         <div class="di">📂</div>
         <p id="drop-lbl">Arraste o <strong>.OBJ</strong> aqui ou toque para selecionar</p>
@@ -550,53 +298,12 @@
       </div>
       <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
       <p class="conv-msg" id="conv-msg"></p>
-      <button class="btn btn-primary btn-full" id="btn-dl-glb" style="display:none" onclick="downloadGLB()">⬇ BAIXAR .GLB CONVERTIDO</button>
+      <button class="btn btn-primary btn-full" id="btn-dl-glb" style="display:none" onclick="downloadGLB()">⬇ BAIXAR .GLB</button>
     </div>
-
   </div>
 </div>
 
-<!-- ═══ PG 3: OFFLINE ═══ -->
-<div id="pg-offline" class="pagina">
-  <header class="cabecalho">
-    <div class="cab-icone">📡</div>
-    <div class="cab-texto"><h1>Offline</h1><p>PWA · CACHE · CAMPO</p></div>
-    <div class="badge badge-green">ATIVO</div>
-  </header>
-  <div class="conteudo">
-
-    <div class="off-hero">
-      <h2>Funciona <span>sem internet</span></h2>
-      <p>Os modelos 3D e dados do projeto ficam salvos no dispositivo. Ideal para canteiro de obras.</p>
-    </div>
-
-    <div class="inst-card">
-      <h4>📲 COMO ABRIR CORRETAMENTE</h4>
-      <div class="inst-li"><div class="sb">!</div><span><strong>Importante:</strong> para a câmera AR funcionar o app precisa estar em HTTPS. Abrir como arquivo local (<code>file://</code>) bloqueia a câmera. Use o Netlify Drop ou outro servidor.</span></div>
-      <div class="inst-li"><div class="sb">A</div><span><strong>Netlify Drop:</strong> acesse <strong>app.netlify.com/drop</strong> no PC, arraste o arquivo HTML. Em segundos você tem um link HTTPS gratuito e permanente.</span></div>
-      <div class="inst-li"><div class="sb">B</div><span><strong>Android (Chrome):</strong> após abrir via HTTPS, toque no menu ⋮ → <em>"Adicionar à tela inicial"</em>. Funciona offline depois.</span></div>
-      <div class="inst-li"><div class="sb">C</div><span><strong>iPhone (Safari):</strong> abra via HTTPS no Safari → botão 📤 → <em>"Adicionar à Tela de Início"</em>.</span></div>
-      <div style="margin-top:12px;">
-        <button class="btn btn-primary btn-full" onclick="instalar()">📲 INSTALAR APP</button>
-      </div>
-    </div>
-
-    <div class="cache-card">
-      <h4>STATUS DO CACHE</h4>
-      <div class="ci"><span class="cn">Cache API</span><span id="ci-cache">–</span></div>
-      <div class="ci"><span class="cn">Projetos salvos</span><span id="ci-proj" class="ok">0</span></div>
-      <div class="ci"><span class="cn">Modelos em cache</span><span id="ci-mod" class="ok">0</span></div>
-      <div class="ci"><span class="cn">Espaço utilizado</span><span id="ci-esp">–</span></div>
-    </div>
-
-    <div class="info-box orange"><strong>Limite:</strong> Navegadores permitem ~50–500MB de localStorage. Para modelos grandes, simplifique no Blender com o <em>Decimate Modifier</em> antes de importar.</div>
-
-    <button class="btn btn-outline btn-full" style="color:var(--orange);border-color:rgba(255,112,67,0.3);" onclick="limparCache()">🗑 LIMPAR CACHE</button>
-
-  </div>
-</div>
-
-<!-- ═══ PG 4: GERADOR DE MARCADOR ═══ -->
+<!-- PG 3: MARCADOR -->
 <div id="pg-marcador" class="pagina">
   <header class="cabecalho">
     <div class="cab-icone">🖨</div>
@@ -604,49 +311,59 @@
     <div class="badge badge-orange">HIRO</div>
   </header>
   <div class="conteudo">
-
-    <div class="marc-hero">
-      <h2>Gere seu <span>marcador</span> AR</h2>
-      <p>Imprima e cole na planta baixa. A câmera detecta o marcador e exibe o modelo 3D em cima.</p>
-    </div>
-
-    <!-- Preview do marcador em tempo real -->
+    <div class="marc-hero"><h2>Gere seu <span>marcador</span> AR</h2><p>Imprima e cole na planta baixa.</p></div>
     <div class="marc-preview-wrap">
       <h4>MARCADOR HIRO</h4>
       <p>Compatível com AR.js · Padrão internacional</p>
       <canvas id="canvas-gerador" width="300" height="300"></canvas>
     </div>
-
-    <!-- Seletor de tamanho de impressão -->
     <p class="label-secao">Tamanho de impressão</p>
     <div class="tamanhos">
-      <div class="btn-tam" onclick="selTam(this,8)"  ><span>📄</span>8 cm<small>MÍNIMO</small></div>
+      <div class="btn-tam" onclick="selTam(this,8)"><span>📄</span>8 cm<small>MÍNIMO</small></div>
       <div class="btn-tam sel" onclick="selTam(this,10)"><span>📋</span>10 cm<small>IDEAL</small></div>
-      <div class="btn-tam" onclick="selTam(this,15)" ><span>🗂</span>15 cm<small>GRANDE</small></div>
+      <div class="btn-tam" onclick="selTam(this,15)"><span>🗂</span>15 cm<small>GRANDE</small></div>
     </div>
-
-    <!-- Botões de ação -->
     <div class="marc-btns">
       <button class="btn-imprimir" onclick="imprimirMarcador()">🖨 IMPRIMIR AGORA</button>
-      <button class="btn-baixar-png" onclick="baixarMarcadorPNG()">⬇ BAIXAR COMO IMAGEM (.PNG)</button>
+      <button class="btn-baixar-png" onclick="baixarMarcadorPNG()">⬇ BAIXAR COMO IMAGEM</button>
     </div>
-
-    <!-- Instruções -->
     <div class="instrucoes-impressao">
-      <h4>📋 INSTRUÇÕES DE USO</h4>
-      <div class="instr-item"><span class="ic">✅</span><span><strong>Tamanho mínimo 8×8 cm</strong> — abaixo disso a câmera não reconhece o marcador.</span></div>
-      <div class="instr-item"><span class="ic">✅</span><span><strong>Papel branco comum</strong> — pode imprimir em preto e branco normalmente.</span></div>
-      <div class="instr-item"><span class="ic">✅</span><span><strong>Sem bordas cortadas</strong> — a borda preta grossa ao redor precisa aparecer completa.</span></div>
-      <div class="instr-item"><span class="ic">✅</span><span><strong>Cole na prancha</strong> — posicione em um canto livre da planta baixa impressa.</span></div>
-      <div class="instr-item"><span class="ic">✅</span><span><strong>Boa iluminação</strong> — evite sombras em cima do marcador ao usar a câmera AR.</span></div>
-      <div class="instr-item"><span class="ic">📏</span><span><strong>Distância ideal da câmera:</strong> 20 a 50 cm do marcador para melhor detecção.</span></div>
-      <div class="instr-item"><span class="ic">⚠</span><span><strong>Superfície plana:</strong> marcador dobrado ou amassado pode falhar no reconhecimento.</span></div>
+      <h4>📋 INSTRUÇÕES</h4>
+      <div class="instr-item"><span class="ic">✅</span><span>Tamanho mínimo <strong>8×8 cm</strong></span></div>
+      <div class="instr-item"><span class="ic">✅</span><span>Papel branco, pode ser P&B</span></div>
+      <div class="instr-item"><span class="ic">✅</span><span>Borda preta completa, sem cortes</span></div>
+      <div class="instr-item"><span class="ic">✅</span><span>Cole em canto livre da planta</span></div>
+      <div class="instr-item"><span class="ic">📏</span><span>Distância ideal da câmera: 20–50 cm</span></div>
     </div>
-
   </div>
 </div>
 
-<!-- ═══ NAV BAR ═══ -->
+<!-- PG 4: OFFLINE -->
+<div id="pg-offline" class="pagina">
+  <header class="cabecalho">
+    <div class="cab-icone">📡</div>
+    <div class="cab-texto"><h1>Offline</h1><p>PWA · CACHE · CAMPO</p></div>
+    <div class="badge badge-green">ATIVO</div>
+  </header>
+  <div class="conteudo">
+    <div class="off-hero"><h2>Funciona <span>sem internet</span></h2><p>Modelos 3D salvos no dispositivo para uso no canteiro.</p></div>
+    <div class="inst-card">
+      <h4>📲 INSTALAR NO CELULAR</h4>
+      <div class="inst-li"><div class="sb">A</div><span><strong>Android (Chrome):</strong> menu ⋮ → "Adicionar à tela inicial"</span></div>
+      <div class="inst-li"><div class="sb">B</div><span><strong>iPhone (Safari):</strong> botão 📤 → "Adicionar à Tela de Início"</span></div>
+      <div style="margin-top:12px;"><button class="btn btn-primary btn-full" onclick="instalar()">📲 INSTALAR APP</button></div>
+    </div>
+    <div class="cache-card">
+      <h4>STATUS DO CACHE</h4>
+      <div class="ci"><span class="cn">Projetos salvos</span><span id="ci-proj" class="ok">0</span></div>
+      <div class="ci"><span class="cn">Modelos em cache</span><span id="ci-mod" class="ok">0</span></div>
+      <div class="ci"><span class="cn">Espaço utilizado</span><span id="ci-esp">–</span></div>
+    </div>
+    <button class="btn btn-outline btn-full" style="color:var(--orange);border-color:rgba(255,112,67,0.3);" onclick="limparCache()">🗑 LIMPAR CACHE</button>
+  </div>
+</div>
+
+<!-- NAV BAR -->
 <nav id="nav-bar">
   <button class="nav-btn ativo" id="nav-projetos"   onclick="irPara('projetos')">  <span>🏗</span>Projetos</button>
   <button class="nav-btn"       id="nav-integracao" onclick="irPara('integracao')"><span>🔗</span>CAD/BIM</button>
@@ -654,39 +371,32 @@
   <button class="nav-btn"       id="nav-offline"    onclick="irPara('offline')">   <span>📡</span>Offline</button>
 </nav>
 
-<!-- ═══ MODAL CADASTRO ═══ -->
+<!-- MODAL CADASTRO -->
 <div class="modal-ov" id="modal" onclick="fmfora(event)">
   <div class="modal-sh">
     <div class="sh-alca"></div>
     <h3>📁 NOVO PROJETO AR</h3>
-    <div class="campo"><label>Nome do Projeto</label><input type="text" id="inp-nome" placeholder="Ex: Edifício Residencial Bloco A"/></div>
+    <div class="campo"><label>Nome do Projeto</label><input type="text" id="inp-nome" placeholder="Ex: Fundação Bloco A"/></div>
     <div class="campo">
       <label>Tipo de Projeto</label>
       <select id="inp-tipo">
         <option value="edificacao">🏗️ Edificação</option>
         <option value="estrutura">🌉 Estrutura / Ponte</option>
-        <option value="hidraulica">💧 Hidráulica / Saneamento</option>
-        <option value="urbanismo">🏙️ Urbanismo / Loteamento</option>
-        <option value="pavimentacao">🛣️ Pavimentação / Estradas</option>
+        <option value="hidraulica">💧 Hidráulica</option>
+        <option value="urbanismo">🏙️ Urbanismo</option>
+        <option value="pavimentacao">🛣️ Pavimentação</option>
         <option value="outro">📦 Outro</option>
       </select>
     </div>
     <div class="campo">
-      <label>Modelo 3D (.glb / .gltf / .obj)</label>
+      <label>Modelo 3D (.glb / .gltf)</label>
       <div class="up-area" onclick="document.getElementById('inp-arq').click()">
         <div class="ui">📤</div>
-        <p id="lbl-arq">Toque para selecionar<br><strong>GLB, GLTF ou OBJ</strong></p>
-        <input type="file" id="inp-arq" accept=".glb,.gltf,.obj" style="display:none" onchange="selecionarArq(this)"/>
+        <p id="lbl-arq">Toque para selecionar<br><strong>GLB ou GLTF</strong></p>
+        <input type="file" id="inp-arq" accept=".glb,.gltf" style="display:none" onchange="selecionarArq(this)"/>
       </div>
     </div>
-    <div class="campo">
-      <label>Disponível Offline?</label>
-      <div class="tog-off" onclick="togOff()">
-        <div><span>Salvar para uso sem internet</span><br><small id="off-info">Modelo armazenado no dispositivo</small></div>
-        <div class="sw on" id="sw-off"></div>
-      </div>
-    </div>
-    <div class="info-box cyan" style="margin-bottom:0;">Sem modelo? O app usará um <strong>modelo de demonstração</strong> para testar o fluxo AR.</div>
+    <div class="info-box cyan" style="margin-bottom:0;">Sem modelo? O app usará um <strong>modelo de demonstração</strong>.</div>
     <div class="m-btns">
       <button class="m-cancelar" onclick="fecharModal()">CANCELAR</button>
       <button class="m-salvar"   onclick="salvar()">SALVAR</button>
@@ -694,11 +404,11 @@
   </div>
 </div>
 
-<!-- ═══ TELA AR ═══ -->
+<!-- TELA AR -->
 <div id="tela-ar">
   <div class="hud hud-top">
     <button class="btn-fechar" onclick="fecharAR()">✕</button>
-    <div class="hud-nome"><h3 id="hud-nome">PROJETO</h3><p id="hud-tipo">AR ATIVO</p></div>
+    <div class="hud-nome"><h3 id="hud-nome">PROJETO</h3><p id="hud-tipo">AR</p></div>
     <div class="hud-pill"><div class="dot"></div><span>LIVE</span></div>
   </div>
   <div class="hud hud-mira">
@@ -711,35 +421,31 @@
       <circle cx="90" cy="90" r="2" fill="#00e5ff"/>
     </svg>
   </div>
-  <!-- Controle de escala — aparece só quando tem modelo GLB -->
-  <div class="escala-hud hud" id="escala-hud" style="display:none;">
+  <div class="escala-hud" id="escala-hud" style="display:none;">
     <span class="escala-label">ESCALA</span>
     <button class="btn-escala" onclick="ajustarEscala(2)">＋</button>
     <span class="escala-val" id="escala-val">0.05</span>
     <button class="btn-escala" onclick="ajustarEscala(0.5)">－</button>
-    <button class="btn-escala" onclick="resetEscala()" title="Reset">↺</button>
+    <button class="btn-escala" onclick="resetEscala()">↺</button>
   </div>
-
   <div class="hud hud-bot">
-    <p class="instr" id="instr-ar">Aponte para o <strong>marcador impresso</strong><br>o modelo 3D aparecerá automaticamente</p>
+    <p class="instr">Aponte para o <strong>marcador impresso</strong><br>o modelo 3D aparecerá automaticamente</p>
     <div class="ctrls">
       <button class="btn-c" onclick="verMarcador()">🖨 MARCADOR</button>
       <button class="btn-c" id="btn-demo" onclick="togDemo()">🎮 DEMO</button>
-      <button class="btn-c" id="btn-cam-test" onclick="testarCamera()">📷 TESTAR</button>
     </div>
   </div>
   <canvas id="demo-canvas"></canvas>
   <div id="ar-container"></div>
-  <div id="erro-camera-display"></div>
 </div>
 
-<!-- ═══ TELA MARCADOR ═══ -->
+<!-- TELA MARCADOR -->
 <div id="tela-marc">
   <div class="marc-wrap">
     <h2>📍 MARCADOR AR</h2>
-    <p>Imprima e cole na prancha do projeto (mín. 8×8 cm)</p>
+    <p>Imprima e cole na prancha (mín. 8×8 cm)</p>
     <canvas id="canvas-marc" width="200" height="200"></canvas><br>
-    <p style="color:#888;font-size:0.75rem;margin-bottom:16px;">Padrão Hiro · compatível AR.js 3.4.5</p>
+    <p style="color:#888;font-size:0.75rem;margin-bottom:16px;">Padrão Hiro · AR.js</p>
     <button class="btn-fechar-marc" onclick="document.getElementById('tela-marc').classList.remove('ativo')">FECHAR</button>
   </div>
 </div>
@@ -750,157 +456,129 @@
 // ══════════════════════════════════════════════
 // ESTADO
 // ══════════════════════════════════════════════
-let projetos   = JSON.parse(localStorage.getItem('arc_v3') || '[]');
-let arqSel     = null;
-let offOn      = true;
-let demoAtivo  = false;
-let demoId     = null;
-let glbData    = null;
-let pwaPrompt  = null;
-let projetoAR  = null;
+let projetos    = JSON.parse(localStorage.getItem('pc3d_v1') || '[]');
+let arqSel      = null;
+let offOn       = true;
+let demoAtivo   = false;
+let demoId      = null;
+let glbData     = null;
+let pwaPrompt   = null;
+let projetoAR   = null;
+let escalaAtual = 0.05;
+let blobUrlAtual= null;
+let demoInicio  = 0;
+let tamMarcador = 10;
 
 const TIPOS = {
-  edificacao:   {e:'🏗️', c:'#00e5ff', l:'Edificação'},
-  estrutura:    {e:'🌉', c:'#ff9f43', l:'Estrutura'},
-  hidraulica:   {e:'💧', c:'#54a0ff', l:'Hidráulica'},
-  urbanismo:    {e:'🏙️', c:'#aa80ff', l:'Urbanismo'},
-  pavimentacao: {e:'🛣️', c:'#ff6b6b', l:'Pavimentação'},
-  outro:        {e:'📦', c:'#aaaaaa', l:'Outro'},
+  edificacao:   {e:'🏗️',c:'#00e5ff',l:'Edificação'},
+  estrutura:    {e:'🌉',c:'#ff9f43',l:'Estrutura'},
+  hidraulica:   {e:'💧',c:'#54a0ff',l:'Hidráulica'},
+  urbanismo:    {e:'🏙️',c:'#aa80ff',l:'Urbanismo'},
+  pavimentacao: {e:'🛣️',c:'#ff6b6b',l:'Pavimentação'},
+  outro:        {e:'📦',c:'#aaaaaa',l:'Outro'},
 };
 
 // ══════════════════════════════════════════════
-// INDEXEDDB — armazenamento de modelos 3D
-// Usamos IndexedDB em vez de localStorage porque:
-// • localStorage tem limite de ~5MB e armazena só texto
-// • Arquivos GLB são binários — viram ~33% maiores em base64
-// • IndexedDB suporta centenas de MB em formato binário puro
+// INDEXEDDB
 // ══════════════════════════════════════════════
-const DB_NOME    = 'ar-civil-db';
-const DB_VERSAO  = 1;
-const STORE_NOME = 'modelos';
-let db = null;
-
-function abrirDB() {
-  return new Promise((resolve, reject) => {
-    if (db) { resolve(db); return; }
-    const req = indexedDB.open(DB_NOME, DB_VERSAO);
-    req.onupgradeneeded = e => {
-      e.target.result.createObjectStore(STORE_NOME);
+const DB_NOME='pc3d-db', DB_VER=1, STORE='modelos';
+let db=null;
+function abrirDB(){
+  return new Promise((res,rej)=>{
+    if(db){res(db);return;}
+    const r=indexedDB.open(DB_NOME,DB_VER);
+    r.onupgradeneeded=e=>e.target.result.createObjectStore(STORE);
+    r.onsuccess=e=>{db=e.target.result;res(db);};
+    r.onerror=e=>rej(e.target.error);
+  });
+}
+async function salvarModeloDB(id,buf){
+  const d=await abrirDB();
+  return new Promise((res,rej)=>{
+    const tx=d.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(buf,id);
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e.target.error);
+  });
+}
+async function carregarModeloDB(id){
+  const d=await abrirDB();
+  return new Promise((res,rej)=>{
+    const r=d.transaction(STORE,'readonly').objectStore(STORE).get(id);
+    r.onsuccess=e=>{
+      if(!e.target.result){res(null);return;}
+      res(URL.createObjectURL(new Blob([e.target.result],{type:'model/gltf-binary'})));
     };
-    req.onsuccess = e => { db = e.target.result; resolve(db); };
-    req.onerror   = e => reject(e.target.error);
+    r.onerror=e=>rej(e.target.error);
   });
 }
-
-// Salva o ArrayBuffer do arquivo GLB no IndexedDB com chave = id do projeto
-async function salvarModeloDB(id, arrayBuffer) {
-  const database = await abrirDB();
-  return new Promise((resolve, reject) => {
-    const tx    = database.transaction(STORE_NOME, 'readwrite');
-    const store = tx.objectStore(STORE_NOME);
-    store.put(arrayBuffer, id);
-    tx.oncomplete = () => resolve();
-    tx.onerror    = e => reject(e.target.error);
-  });
-}
-
-// Recupera o ArrayBuffer e cria um Blob URL temporário para o A-Frame
-async function carregarModeloDB(id) {
-  const database = await abrirDB();
-  return new Promise((resolve, reject) => {
-    const tx    = database.transaction(STORE_NOME, 'readonly');
-    const store = tx.objectStore(STORE_NOME);
-    const req   = store.get(id);
-    req.onsuccess = e => {
-      if (!e.target.result) { resolve(null); return; }
-      // Cria Blob URL — o A-Frame lê como se fosse um arquivo normal
-      const blob = new Blob([e.target.result], { type: 'model/gltf-binary' });
-      resolve(URL.createObjectURL(blob));
-    };
-    req.onerror = e => reject(e.target.error);
-  });
-}
-
-async function deletarModeloDB(id) {
-  const database = await abrirDB();
-  return new Promise((resolve) => {
-    const tx = database.transaction(STORE_NOME, 'readwrite');
-    tx.objectStore(STORE_NOME).delete(id);
-    tx.oncomplete = () => resolve();
+async function deletarModeloDB(id){
+  const d=await abrirDB();
+  return new Promise(res=>{
+    const tx=d.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete=()=>res();
   });
 }
 
 // ══════════════════════════════════════════════
-// DETECTAR file:// e avisar
+// INIT
 // ══════════════════════════════════════════════
-if (location.protocol === 'file:' || location.protocol === 'blob:') {
-  document.getElementById('aviso-https').style.display = 'block';
-}
-
-// ══════════════════════════════════════════════
-// CACHE API — PRÉ-CARREGA LIBS OFFLINE
-// ══════════════════════════════════════════════
-if ('caches' in window && navigator.onLine) {
-  caches.open('arc-v3').then(c => {
-    [
-      'https://aframe.io/releases/1.3.0/aframe.min.js',
-      'https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar-nft.js'
-    ].forEach(u => fetch(u).then(r => { if(r.ok) c.put(u,r); }).catch(()=>{}));
-  });
+if(location.protocol==='file:'||location.protocol==='blob:'){
+  document.getElementById('aviso-https').style.display='block';
 }
 
 // ══════════════════════════════════════════════
 // NAV
 // ══════════════════════════════════════════════
-function irPara(pg) {
-  document.querySelectorAll('.pagina').forEach(p => p.classList.remove('ativa'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+function irPara(pg){
+  document.querySelectorAll('.pagina').forEach(p=>p.classList.remove('ativa'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('ativo'));
   document.getElementById('pg-'+pg).classList.add('ativa');
   document.getElementById('nav-'+pg).classList.add('ativo');
-  if (pg === 'offline') atualizarCache();
-  if (pg === 'marcador') setTimeout(desenharMarcadorGerador, 50);
+  if(pg==='offline') atualizarCache();
+  if(pg==='marcador') setTimeout(desenharMarcadorGerador,50);
 }
 
 // ══════════════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════════════
-function toast(msg, t='cyan') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.color = t==='green'?'#00e676':t==='orange'?'#ff7043':'#00e5ff';
+function toast(msg,t='cyan'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.color=t==='green'?'#00e676':t==='orange'?'#ff7043':'#00e5ff';
   el.classList.add('v'); clearTimeout(el._t);
-  el._t = setTimeout(()=>el.classList.remove('v'), 3000);
+  el._t=setTimeout(()=>el.classList.remove('v'),3000);
 }
 
 // ══════════════════════════════════════════════
 // REDE
 // ══════════════════════════════════════════════
-function updRede() {
-  const el = document.getElementById('status-rede');
-  const tx = document.getElementById('status-txt');
-  if (navigator.onLine) { el.className='online';  tx.textContent='ONLINE · TODOS OS RECURSOS DISPONÍVEIS'; }
-  else                  { el.className='offline'; tx.textContent='OFFLINE · USANDO DADOS EM CACHE'; }
+function updRede(){
+  const el=document.getElementById('status-rede'),tx=document.getElementById('status-txt');
+  if(navigator.onLine){el.className='online';tx.textContent='ONLINE';}
+  else{el.className='offline';tx.textContent='OFFLINE · USANDO CACHE';}
 }
-window.addEventListener('online', updRede);
-window.addEventListener('offline', updRede);
+window.addEventListener('online',updRede);
+window.addEventListener('offline',updRede);
 updRede();
 
 // ══════════════════════════════════════════════
 // PROJETOS
 // ══════════════════════════════════════════════
-function renderProj() {
-  const el = document.getElementById('lista-proj');
-  if (!projetos.length) {
-    el.innerHTML = `<div class="vazio"><div class="e">🏗️</div><p>Nenhum projeto ainda.<br>Toque em <strong>+ NOVO</strong> para começar.</p></div>`;
+function renderProj(){
+  const el=document.getElementById('lista-proj');
+  if(!projetos.length){
+    el.innerHTML=`<div class="vazio"><div class="e">🏗️</div><p>Nenhum projeto ainda.<br>Toque em <strong>+ NOVO</strong> para começar.</p></div>`;
     return;
   }
-  el.innerHTML = projetos.map((p,i) => {
-    const t = TIPOS[p.tipo]||TIPOS.outro;
+  el.innerHTML=projetos.map((p,i)=>{
+    const t=TIPOS[p.tipo]||TIPOS.outro;
     return `<div class="card-proj">
       <div class="proj-ico" style="background:${t.c}18;border:1px solid ${t.c}33;">${t.e}</div>
       <div class="proj-info"><h3>${p.nome}</h3><p>${t.l} · ${p.data}</p></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-        <span class="badge-off ${p.temModelo?'sim':'nao'}">${p.temModelo?(p.offline?'✓ OFFLINE':'✓ MODELO'):'SEM MODELO'}</span>
+        <span class="badge-off ${p.temModelo?'sim':'nao'}">${p.temModelo?'✓ MODELO':'SEM MODELO'}</span>
         <div style="display:flex;gap:6px;">
           <button class="btn-ar" onclick="abrirAR(${i})">📷 AR</button>
           <button class="btn-deletar" onclick="deletarProjeto(${i})">🗑</button>
@@ -914,229 +592,167 @@ renderProj();
 // ══════════════════════════════════════════════
 // MODAL
 // ══════════════════════════════════════════════
-function abrirModal() {
+function abrirModal(){
   document.getElementById('modal').classList.add('ativo');
   document.getElementById('inp-nome').value='';
-  document.getElementById('lbl-arq').innerHTML='Toque para selecionar<br><strong>GLB, GLTF ou OBJ</strong>';
+  document.getElementById('lbl-arq').innerHTML='Toque para selecionar<br><strong>GLB ou GLTF</strong>';
   arqSel=null; offOn=true;
-  document.getElementById('sw-off').className='sw on';
+  document.getElementById('sw-off') && (document.getElementById('sw-off').className='sw on');
 }
-function fecharModal() { document.getElementById('modal').classList.remove('ativo'); }
-function fmfora(e) { if(e.target.id==='modal') fecharModal(); }
-function togOff() {
-  offOn=!offOn;
-  document.getElementById('sw-off').className='sw'+(offOn?' on':'');
-  document.getElementById('off-info').textContent=offOn?'Modelo armazenado no dispositivo':'Apenas referência — requer internet';
+function fecharModal(){document.getElementById('modal').classList.remove('ativo');}
+function fmfora(e){if(e.target.id==='modal')fecharModal();}
+function selecionarArq(inp){
+  if(inp.files[0]){arqSel=inp.files[0];document.getElementById('lbl-arq').innerHTML=`✅ <strong>${arqSel.name}</strong>`;}
 }
-function selecionarArq(inp) {
-  if(inp.files[0]){ arqSel=inp.files[0]; document.getElementById('lbl-arq').innerHTML=`✅ <strong>${arqSel.name}</strong>`; }
-}
-async function salvar() {
-  const nome = document.getElementById('inp-nome').value.trim();
+async function salvar(){
+  const nome=document.getElementById('inp-nome').value.trim();
   if(!nome){toast('⚠ Informe o nome','orange');return;}
-  const tipo = document.getElementById('inp-tipo').value;
-  const data = new Date().toLocaleDateString('pt-BR');
-
-  // Gera um ID único para este projeto — usado como chave no IndexedDB
-  const id = 'proj_' + Date.now();
-
-  if (arqSel) {
-    toast('⏳ Salvando modelo 3D...');
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        // Salva o arquivo binário puro no IndexedDB (não base64)
-        await salvarModeloDB(id, e.target.result);
-        projetos.push({ nome, tipo, data, modeloId: id, temModelo: true, offline: offOn });
-        localStorage.setItem('arc_v3', JSON.stringify(projetos));
-        fecharModal(); renderProj(); toast('✅ Projeto salvo com modelo!','green');
-      } catch(err) {
-        console.error('[Pedreiro Civil 3D] Erro ao salvar modelo:', err);
-        toast('❌ Erro ao salvar modelo: ' + err.message, 'orange');
-      }
+  const tipo=document.getElementById('inp-tipo').value;
+  const data=new Date().toLocaleDateString('pt-BR');
+  const id='proj_'+Date.now();
+  if(arqSel){
+    toast('⏳ Salvando modelo...');
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      try{
+        await salvarModeloDB(id,e.target.result);
+        projetos.push({nome,tipo,data,modeloId:id,temModelo:true});
+        localStorage.setItem('pc3d_v1',JSON.stringify(projetos));
+        fecharModal(); renderProj(); atualizarCache();
+        toast('✅ Projeto salvo!','green');
+      }catch(err){toast('❌ Erro ao salvar: '+err.message,'orange');}
     };
-    // Lê como ArrayBuffer — formato binário puro, sem conversão para texto
     reader.readAsArrayBuffer(arqSel);
   } else {
-    projetos.push({ nome, tipo, data, modeloId: null, temModelo: false, offline: false });
-    localStorage.setItem('arc_v3', JSON.stringify(projetos));
-    fecharModal(); renderProj(); toast('✅ Projeto salvo!','green');
+    projetos.push({nome,tipo,data,modeloId:null,temModelo:false});
+    localStorage.setItem('pc3d_v1',JSON.stringify(projetos));
+    fecharModal(); renderProj(); atualizarCache();
+    toast('✅ Projeto salvo!','green');
   }
 }
 
 // ══════════════════════════════════════════════
-// AR — ABRIR / FECHAR
+// DELETAR PROJETO
 // ══════════════════════════════════════════════
-async function abrirAR(idx) {
-  projetoAR = projetos[idx];
-  const t = TIPOS[projetoAR.tipo]||TIPOS.outro;
-  document.getElementById('hud-nome').textContent = projetoAR.nome.toUpperCase();
-  document.getElementById('hud-tipo').textContent = `${t.e} ${t.l.toUpperCase()} · AR`;
+async function deletarProjeto(idx){
+  const p=projetos[idx];
+  if(!confirm(`Deletar "${p.nome}"?`))return;
+  if(p.modeloId){try{await deletarModeloDB(p.modeloId);}catch(e){}}
+  projetos.splice(idx,1);
+  localStorage.setItem('pc3d_v1',JSON.stringify(projetos));
+  renderProj(); atualizarCache();
+  toast('🗑 Projeto deletado','orange');
+}
+
+// ══════════════════════════════════════════════
+// AR — ABRIR
+// ══════════════════════════════════════════════
+async function abrirAR(idx){
+  projetoAR=projetos[idx];
+  const t=TIPOS[projetoAR.tipo]||TIPOS.outro;
+  document.getElementById('hud-nome').textContent=projetoAR.nome.toUpperCase();
+  document.getElementById('hud-tipo').textContent=`${t.e} ${t.l.toUpperCase()} · AR`;
   document.getElementById('tela-ar').classList.add('ativo');
-  document.getElementById('erro-camera-display').innerHTML = '';
   document.body.style.overflow='hidden';
-  toast('⏳ Abrindo câmera...');
 
-  // iOS 13+ — pedir permissão de sensores
-  if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
-    try { await DeviceOrientationEvent.requestPermission(); } catch(e){}
+  // iOS 13+
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+    try{await DeviceOrientationEvent.requestPermission();}catch(e){}
   }
 
-
-  // Carrega o modelo do IndexedDB e cria Blob URL para o A-Frame
-  let blobUrl = null;
-  if (projetoAR.temModelo && projetoAR.modeloId) {
-    try {
-      blobUrl = await carregarModeloDB(projetoAR.modeloId);
-      if (blobUrl) toast('✅ Modelo carregado — aponte para o marcador', 'green');
-      else         toast('⚠ Modelo não encontrado — usando demonstração', 'orange');
-    } catch(err) {
-      console.warn('[Pedreiro Civil 3D] Erro ao carregar modelo:', err);
-      toast('⚠ Erro ao carregar modelo', 'orange');
-    }
+  // Carrega modelo do IndexedDB
+  let blobUrl=null;
+  if(projetoAR.temModelo&&projetoAR.modeloId){
+    try{
+      blobUrl=await carregarModeloDB(projetoAR.modeloId);
+      if(blobUrl) toast('✅ Modelo carregado — aponte para o marcador','green');
+      else toast('⚠ Modelo não encontrado','orange');
+    }catch(err){toast('⚠ Erro ao carregar modelo','orange');}
   }
 
-  // Mostra controle de escala só quando tem modelo GLB
-  escalaAtual = 0.05;
-  blobUrlAtual = null;
-  document.getElementById('escala-val').textContent = '0.05';
-  document.getElementById('escala-hud').style.display = blobUrl ? 'flex' : 'none';
-
-  montarCena(projetoAR, blobUrl);
-
+  escalaAtual=0.05; blobUrlAtual=null;
+  document.getElementById('escala-val').textContent='0.05';
+  document.getElementById('escala-hud').style.display=blobUrl?'flex':'none';
+  montarCena(projetoAR,blobUrl);
 }
 
-
-  el.innerHTML = `
-    <div class="erro-camera">
-      <div class="ic">📷</div>
-      <h3>${msg}</h3>
-      <p>${detalhe}</p>
-      <code>${erro.name}: ${erro.message}</code>
-      <p style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:16px;">Dica: Tente o botão 🎮 DEMO para ver o modelo 3D sem câmera</p>
-      <button class="btn-tentar-novamente" onclick="fecharAR()">✕ FECHAR E VOLTAR</button>
-    </div>
-  `;
-}
-
-function fecharAR() {
-  // Para qualquer stream de vídeo ativo antes de fechar
-  document.querySelectorAll('video').forEach(v => {
-    if (v.srcObject) { v.srcObject.getTracks().forEach(t => t.stop()); v.srcObject = null; }
+// ══════════════════════════════════════════════
+// AR — FECHAR
+// ══════════════════════════════════════════════
+function fecharAR(){
+  // Para todos os streams de vídeo ativos
+  document.querySelectorAll('video').forEach(v=>{
+    if(v.srcObject){v.srcObject.getTracks().forEach(t=>t.stop());v.srcObject=null;}
   });
   document.getElementById('tela-ar').classList.remove('ativo');
-  document.body.style.overflow = '';
-  document.getElementById('ar-container').innerHTML = '';
-  document.getElementById('erro-camera-display').innerHTML = ''; // limpa erro ao fechar
-  if (demoId) { cancelAnimationFrame(demoId); demoId = null; }
-  document.getElementById('demo-canvas').style.display = 'none';
-  document.getElementById('btn-demo').className = 'btn-c';
-  document.getElementById('escala-hud').style.display = 'none';
-  blobUrlAtual = null;
-  demoAtivo = false;
+  document.body.style.overflow='';
+  document.getElementById('ar-container').innerHTML='';
+  if(demoId){cancelAnimationFrame(demoId);demoId=null;}
+  document.getElementById('demo-canvas').style.display='none';
+  document.getElementById('btn-demo').className='btn-c';
+  document.getElementById('escala-hud').style.display='none';
+  blobUrlAtual=null; demoAtivo=false;
 }
 
 // ══════════════════════════════════════════════
-// CENA AR.JS
-// Configurações para suprimir erros de sensores:
-// • device-orientation-permission-ui="enabled:false"
-//   → remove o popup interno do A-Frame
-// • look-controls="enabled:false" na câmera
-//   → câmera controlada pela visão (marcador), não pelo giroscópio
-// • trackingMethod:best → visão computacional pura
-// • Os avisos de DPDB/sensor que aparecem no console são
-//   internos do AR.js e NÃO impedem o funcionamento do AR.
-//   São apenas logs de fallback e podem ser ignorados.
+// MONTAR CENA AR
 // ══════════════════════════════════════════════
-// montarCena recebe o blobUrl já pronto do IndexedDB
-// Usa escalaAtual para que os botões +/- funcionem remontando a cena
-function montarCena(proj, blobUrl) {
-  if (blobUrl) blobUrlAtual = blobUrl;
-  const s = escalaAtual;
-  const container = document.getElementById('ar-container');
-  container.innerHTML = '';
-
-  const modelTag = blobUrlAtual
-    ? '<a-entity gltf-model="#modelo-glb" position="0 0 0" scale="' + s + ' ' + s + ' ' + s + '" rotation="-90 0 0"></a-entity>'
-    : primitiva3D(proj.tipo);
-  const assetTag = blobUrlAtual
-    ? '<a-asset-item id="modelo-glb" src="' + blobUrlAtual + '"></a-asset-item>'
-    : '';
-
-  container.innerHTML =
-    '<a-scene embedded' +
-    ' arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod:best; detectionMode:mono_and_matrix; matrixCodeType:3x3;"' +
-    ' vr-mode-ui="enabled:false"' +
-    ' device-orientation-permission-ui="enabled:false"' +
-    ' renderer="logarithmicDepthBuffer:true; precision:medium; alpha:true;"' +
-    ' style="position:fixed;inset:0;z-index:910;">' +
-    '<a-assets timeout="15000">' + assetTag + '</a-assets>' +
-    '<a-light type="ambient" color="#ffffff" intensity="0.9"></a-light>' +
-    '<a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>' +
-    '<a-marker preset="hiro">' + modelTag + '</a-marker>' +
-    '<a-entity camera look-controls="enabled:false"></a-entity>' +
-    '</a-scene>';
+function montarCena(proj,blobUrl){
+  if(blobUrl) blobUrlAtual=blobUrl;
+  const s=escalaAtual;
+  const assetTag=blobUrlAtual?`<a-asset-item id="modelo-glb" src="${blobUrlAtual}"></a-asset-item>`:'';
+  const modelTag=blobUrlAtual
+    ?`<a-entity gltf-model="#modelo-glb" position="0 0 0" scale="${s} ${s} ${s}" rotation="-90 0 0"></a-entity>`
+    :primitiva3D(proj.tipo);
+  document.getElementById('ar-container').innerHTML=
+    `<a-scene embedded
+       arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod:best; detectionMode:mono_and_matrix; matrixCodeType:3x3;"
+       vr-mode-ui="enabled:false"
+       device-orientation-permission-ui="enabled:false"
+       renderer="logarithmicDepthBuffer:true; precision:medium; alpha:true;"
+       style="position:fixed;inset:0;z-index:910;">
+      <a-assets timeout="15000">${assetTag}</a-assets>
+      <a-light type="ambient" color="#ffffff" intensity="0.9"></a-light>
+      <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
+      <a-marker preset="hiro">${modelTag}</a-marker>
+      <a-entity camera look-controls="enabled:false"></a-entity>
+    </a-scene>`;
 }
 
+// ══════════════════════════════════════════════
+// ESCALA
+// ══════════════════════════════════════════════
+function ajustarEscala(fator){
+  escalaAtual=Math.max(0.001,Math.min(50,escalaAtual*fator));
+  const d=escalaAtual<0.01?escalaAtual.toFixed(4):escalaAtual<1?escalaAtual.toFixed(3):escalaAtual.toFixed(2);
+  document.getElementById('escala-val').textContent=d;
+  if(blobUrlAtual&&projetoAR){
+    document.getElementById('ar-container').innerHTML='';
+    setTimeout(()=>montarCena(projetoAR,null),100);
   }
-
-  // 2. CRIA VÍDEO DE FUNDO DIRETO
-  const video = document.createElement('video');
-  video.srcObject = stream;
-  video.autoplay = true;
-  video.playsInline = true;
-  video.muted = true;
-  video.setAttribute('playsinline', '');
-  video.setAttribute('webkit-playsinline', '');
-  video.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:910;';
-  container.appendChild(video);
-  container._stream = stream;
-  toast('Câmera aberta! Aponte para o marcador', 'green');
-
-  // 3. MONTA AR.JS POR CIMA do vídeo
-  await new Promise(r => setTimeout(r, 500));
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;inset:0;z-index:920;';
-  const modelTag = blobUrlAtual
-    ? '<a-entity gltf-model="#modelo-glb" position="0 0 0" scale="' + s + ' ' + s + ' ' + s + '" rotation="-90 0 0"></a-entity>'
-    : primitiva3D(proj.tipo);
-  const assetTag = blobUrlAtual
-    ? '<a-asset-item id="modelo-glb" src="' + blobUrlAtual + '"></a-asset-item>'
-    : '';
-  wrap.innerHTML =
-    '<a-scene embedded' +
-    ' arjs="sourceType:webcam; debugUIEnabled:false; trackingMethod:best; detectionMode:mono_and_matrix; matrixCodeType:3x3;"' +
-    ' vr-mode-ui="enabled:false"' +
-    ' device-orientation-permission-ui="enabled:false"' +
-    ' renderer="logarithmicDepthBuffer:true; precision:medium; alpha:true; antialias:true;"' +
-    ' style="position:fixed;inset:0;z-index:920;background:transparent;">' +
-    '<a-assets timeout="15000">' + assetTag + '</a-assets>' +
-    '<a-light type="ambient" color="#ffffff" intensity="0.9"></a-light>' +
-    '<a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>' +
-    '<a-marker preset="hiro">' + modelTag + '</a-marker>' +
-    '<a-entity camera look-controls="enabled:false"></a-entity>' +
-    '</a-scene>';
-  container.appendChild(wrap);
+  toast(`📐 Escala: ${d}`);
+}
+function resetEscala(){
+  escalaAtual=0.05;
+  document.getElementById('escala-val').textContent='0.05';
+  if(blobUrlAtual&&projetoAR){
+    document.getElementById('ar-container').innerHTML='';
+    setTimeout(()=>montarCena(projetoAR,null),100);
+  }
+  toast('↺ Escala resetada');
 }
 
-
-function primitiva3D(tipo) {
-  const m = {
-    edificacao:   `<a-box position="0 .5 0" width="1.5" height="1" depth="1.5" color="#78909C"></a-box>
-                   <a-box position="0 1.2 0" width="1.1" height=".4" depth="1.1" color="#90A4AE"></a-box>
-                   <a-cone position="0 1.65 0" radius-bottom=".8" radius-top="0" height=".5" color="#546E7A"></a-cone>`,
-    estrutura:    `<a-box position="0 .1 0" width="2.5" height=".08" depth=".5" color="#78909C"></a-box>
-                   <a-cylinder position="-1 .55 0" radius=".05" height="1" color="#546E7A"></a-cylinder>
-                   <a-cylinder position="1 .55 0" radius=".05" height="1" color="#546E7A"></a-cylinder>`,
-    hidraulica:   `<a-cylinder position="0 .5 0" radius=".5" height=".8" color="#29B6F6" opacity=".75"></a-cylinder>
-                   <a-cylinder position="-.8 .2 0" radius=".07" height="1.6" rotation="0 0 90" color="#0288D1"></a-cylinder>`,
-    urbanismo:    `<a-plane position="0 0 0" rotation="-90 0 0" width="2.5" height="2.5" color="#546E7A"></a-plane>
-                   <a-box position="-.6 .15 -.6" width=".6" height=".3" depth=".6" color="#B0BEC5"></a-box>
-                   <a-box position=".6 .25 .6" width=".6" height=".5" depth=".6" color="#78909C"></a-box>`,
-    pavimentacao: `<a-plane position="0 .01 0" rotation="-90 0 0" width=".9" height="3" color="#424242"></a-plane>
-                   <a-plane position="0 0 0" rotation="-90 0 0" width="3" height="3" color="#5D4037"></a-plane>`,
-    outro:        `<a-box position="0 .5 0" width="1" height="1" depth="1" color="#7E57C2"
-                     animation="property:rotation;to:0 360 0;loop:true;dur:4000;easing:linear"></a-box>`,
+// ══════════════════════════════════════════════
+// PRIMITIVAS 3D (fallback sem modelo)
+// ══════════════════════════════════════════════
+function primitiva3D(tipo){
+  const m={
+    edificacao:`<a-box position="0 .5 0" width="1.5" height="1" depth="1.5" color="#78909C"></a-box><a-cone position="0 1.25 0" radius-bottom=".9" radius-top="0" height=".5" color="#546E7A"></a-cone>`,
+    estrutura:`<a-box position="0 .1 0" width="2.5" height=".08" depth=".5" color="#78909C"></a-box><a-cylinder position="-1 .55 0" radius=".05" height="1" color="#546E7A"></a-cylinder><a-cylinder position="1 .55 0" radius=".05" height="1" color="#546E7A"></a-cylinder>`,
+    hidraulica:`<a-cylinder position="0 .5 0" radius=".5" height=".8" color="#29B6F6" opacity=".75"></a-cylinder>`,
+    urbanismo:`<a-plane position="0 0 0" rotation="-90 0 0" width="2.5" height="2.5" color="#546E7A"></a-plane><a-box position="-.6 .25 -.6" width=".6" height=".5" depth=".6" color="#78909C"></a-box>`,
+    pavimentacao:`<a-plane position="0 0 0" rotation="-90 0 0" width="3" height="3" color="#5D4037"></a-plane><a-plane position="0 .01 0" rotation="-90 0 0" width=".9" height="3" color="#424242"></a-plane>`,
+    outro:`<a-box position="0 .5 0" width="1" height="1" depth="1" color="#7E57C2" animation="property:rotation;to:0 360 0;loop:true;dur:4000;easing:linear"></a-box>`,
   };
   return m[tipo]||m.outro;
 }
@@ -1144,197 +760,73 @@ function primitiva3D(tipo) {
 // ══════════════════════════════════════════════
 // DEMO CANVAS
 // ══════════════════════════════════════════════
-function togDemo() {
+function togDemo(){
   demoAtivo=!demoAtivo;
-  const btn=document.getElementById('btn-demo'), cv=document.getElementById('demo-canvas');
+  const btn=document.getElementById('btn-demo'),cv=document.getElementById('demo-canvas');
   if(demoAtivo){
     btn.className='btn-c on'; cv.style.display='block';
     cv.width=innerWidth; cv.height=innerHeight;
-    rodarDemo(cv); toast('🎮 Demonstração ativada');
+    demoInicio=Date.now(); rodarDemo(cv);
+    toast('🎮 Demonstração ativada');
   } else {
     btn.className='btn-c'; cv.style.display='none';
     if(demoId){cancelAnimationFrame(demoId);demoId=null;}
   }
 }
 
-function rodarDemo(cv) {
-  const ctx=cv.getContext('2d'), tipo=projetoAR?.tipo||'edificacao', t=TIPOS[tipo]||TIPOS.outro;
+function rodarDemo(cv){
+  const ctx=cv.getContext('2d'),tipo=projetoAR?.tipo||'edificacao',t=TIPOS[tipo]||TIPOS.outro;
+  let angY=0,angX=-0.18,velY=0.012,velX=0,zoom=1;
+  let drag=false,lx=0,ly=0,ld=0;
 
-  // Estado de rotação — controlado pelo toque/mouse
-  let angY = 0;       // rotação horizontal (Y) — controlada pelo usuário
-  let angX = -0.18;   // rotação vertical (X) — leve inclinação inicial
-  let velY = 0.012;   // velocidade de auto-rotação (diminui quando usuário interage)
-  let velX = 0;
-  let zoom = 1;
+  cv.onmousedown=e=>{drag=true;lx=e.clientX;ly=e.clientY;velY=0;velX=0;};
+  cv.onmousemove=e=>{if(!drag)return;velY=(e.clientX-lx)*0.008;velX=(e.clientY-ly)*0.008;angY+=velY;angX=Math.max(-1.2,Math.min(1.2,angX+velX));lx=e.clientX;ly=e.clientY;};
+  cv.onmouseup=cv.onmouseleave=()=>{drag=false;};
+  cv.addEventListener('touchstart',e=>{e.preventDefault();if(e.touches.length===1){drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;velY=0;velX=0;}else if(e.touches.length===2){ld=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:false});
+  cv.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1&&drag){velY=(e.touches[0].clientX-lx)*0.01;velX=(e.touches[0].clientY-ly)*0.01;angY+=velY;angX=Math.max(-1.2,Math.min(1.2,angX+velX));lx=e.touches[0].clientX;ly=e.touches[0].clientY;}else if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);zoom=Math.max(0.4,Math.min(2.5,zoom+(d-ld)*0.005));ld=d;}},{passive:false});
+  cv.addEventListener('touchend',()=>{drag=false;},{passive:false});
+  cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.4,Math.min(2.5,zoom-e.deltaY*0.001));},{passive:false});
 
-  // Estado do toque/arraste
-  let arrastando  = false;
-  let ultimoX     = 0;
-  let ultimoY     = 0;
-  let ultimoDist  = 0; // para pinch-zoom
-
-  // ── MOUSE ──
-  cv.addEventListener('mousedown', e => {
-    arrastando = true;
-    ultimoX = e.clientX;
-    ultimoY = e.clientY;
-    velY = 0; velX = 0; // para auto-rotação ao tocar
-  });
-  cv.addEventListener('mousemove', e => {
-    if (!arrastando) return;
-    const dx = e.clientX - ultimoX;
-    const dy = e.clientY - ultimoY;
-    velY = dx * 0.008;
-    velX = dy * 0.008;
-    angY += velY;
-    angX += velX;
-    angX = Math.max(-1.2, Math.min(1.2, angX)); // limita inclinação vertical
-    ultimoX = e.clientX;
-    ultimoY = e.clientY;
-  });
-  cv.addEventListener('mouseup',    () => { arrastando = false; });
-  cv.addEventListener('mouseleave', () => { arrastando = false; });
-
-  // ── TOQUE (celular) ──
-  cv.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if (e.touches.length === 1) {
-      arrastando = true;
-      ultimoX = e.touches[0].clientX;
-      ultimoY = e.touches[0].clientY;
-      velY = 0; velX = 0;
-    } else if (e.touches.length === 2) {
-      // Pinch zoom — distância inicial entre os dois dedos
-      ultimoDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-    }
-  }, { passive: false });
-
-  cv.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (e.touches.length === 1 && arrastando) {
-      const dx = e.touches[0].clientX - ultimoX;
-      const dy = e.touches[0].clientY - ultimoY;
-      velY = dx * 0.01;
-      velX = dy * 0.01;
-      angY += velY;
-      angX += velX;
-      angX = Math.max(-1.2, Math.min(1.2, angX));
-      ultimoX = e.touches[0].clientX;
-      ultimoY = e.touches[0].clientY;
-    } else if (e.touches.length === 2) {
-      // Pinch zoom
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      const delta = dist - ultimoDist;
-      zoom = Math.max(0.4, Math.min(2.5, zoom + delta * 0.005));
-      ultimoDist = dist;
-    }
-  }, { passive: false });
-
-  cv.addEventListener('touchend', () => { arrastando = false; });
-
-  // ── SCROLL (zoom no PC) ──
-  cv.addEventListener('wheel', e => {
-    e.preventDefault();
-    zoom = Math.max(0.4, Math.min(2.5, zoom - e.deltaY * 0.001));
-  }, { passive: false });
-
-  function f() {
-    // Inércia — continua girando suavemente após soltar
-    if (!arrastando) {
-      if (Math.abs(velY) > 0.0001) { angY += velY; velY *= 0.95; }
-      else velY = 0.012; // retoma auto-rotação
-      if (Math.abs(velX) > 0.0001) { angX += velX; velX *= 0.92; angX = Math.max(-1.2, Math.min(1.2, angX)); }
-    }
-
+  function f(){
+    if(!drag){if(Math.abs(velY)>0.0001){angY+=velY;velY*=0.95;}else velY=0.012;if(Math.abs(velX)>0.0001){angX+=velX;velX*=0.92;angX=Math.max(-1.2,Math.min(1.2,angX));}}
     ctx.clearRect(0,0,cv.width,cv.height);
-
-    // Fundo gradiente
     const g=ctx.createLinearGradient(0,0,0,cv.height);
-    g.addColorStop(0,'#0d1520'); g.addColorStop(1,'#070b10');
-    ctx.fillStyle=g; ctx.fillRect(0,0,cv.width,cv.height);
-
-    // Grade de fundo sutil
-    ctx.strokeStyle='rgba(0,229,255,0.04)'; ctx.lineWidth=1;
-    for(let i=0;i<cv.width;i+=40){ ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,cv.height); ctx.stroke(); }
-    for(let i=0;i<cv.height;i+=40){ ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(cv.width,i); ctx.stroke(); }
-
-    const cx=cv.width/2, cy=cv.height/2;
-
-    // Sombra/base do modelo
-    ctx.save();
-    ctx.translate(cx, cy + 90 * zoom);
-    ctx.scale(zoom, zoom * 0.3);
-    const sg = ctx.createRadialGradient(0,0,0, 0,0,80);
-    sg.addColorStop(0,'rgba(0,229,255,0.12)'); sg.addColorStop(1,'transparent');
-    ctx.fillStyle = sg;
-    ctx.beginPath(); ctx.ellipse(0,0,80,30,0,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-
-    // Modelo 3D com rotação livre
-    ctx.save();
-    ctx.translate(cx, cy - 20);
-    ctx.scale(zoom, zoom);
-    draw3D(ctx, tipo, angY, t.c, angX);
-    ctx.restore();
-
-    // Label
-    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(cx-140,cv.height-155,280,70);
-    ctx.strokeStyle=t.c+'55'; ctx.lineWidth=1; ctx.strokeRect(cx-140,cv.height-155,280,70);
-    ctx.fillStyle=t.c; ctx.font='bold 14px Rajdhani,sans-serif'; ctx.textAlign='center';
-    ctx.fillText(projetoAR?.nome?.toUpperCase()||'DEMO', cx, cv.height-125);
-    ctx.fillStyle='rgba(255,255,255,.35)'; ctx.font='10px JetBrains Mono,monospace';
-    ctx.fillText('ARRASTE PARA GIRAR · PINÇA PARA ZOOM', cx, cv.height-107);
-
-    // Ícone de interação (some após 3s)
-    if (Date.now() - demoInicio < 3000) {
-      ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='22px sans-serif'; ctx.textAlign='center';
-      ctx.fillText('👆', cx, cy + 130);
-      ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='11px JetBrains Mono,monospace';
-      ctx.fillText('TOQUE E ARRASTE', cx, cy + 155);
-    }
-
-    demoId = requestAnimationFrame(f);
+    g.addColorStop(0,'#0d1520');g.addColorStop(1,'#070b10');
+    ctx.fillStyle=g;ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle='rgba(0,229,255,0.04)';ctx.lineWidth=1;
+    for(let i=0;i<cv.width;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,cv.height);ctx.stroke();}
+    for(let i=0;i<cv.height;i+=40){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(cv.width,i);ctx.stroke();}
+    const cx=cv.width/2,cy=cv.height/2;
+    ctx.save();ctx.translate(cx,cy-20);ctx.scale(zoom,zoom);draw3D(ctx,tipo,angY,t.c,angX);ctx.restore();
+    ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(cx-140,cv.height-155,280,70);
+    ctx.strokeStyle=t.c+'55';ctx.lineWidth=1;ctx.strokeRect(cx-140,cv.height-155,280,70);
+    ctx.fillStyle=t.c;ctx.font='bold 14px Rajdhani,sans-serif';ctx.textAlign='center';
+    ctx.fillText(projetoAR?.nome?.toUpperCase()||'DEMO',cx,cv.height-125);
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='10px JetBrains Mono,monospace';
+    ctx.fillText('ARRASTE PARA GIRAR · PINÇA PARA ZOOM',cx,cv.height-107);
+    if(Date.now()-demoInicio<3000){ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='22px sans-serif';ctx.fillText('👆',cx,cy+130);ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='11px JetBrains Mono,monospace';ctx.fillText('TOQUE E ARRASTE',cx,cy+155);}
+    demoId=requestAnimationFrame(f);
   }
   f();
 }
 
-let demoInicio = Date.now();
-
-function draw3D(ctx,tipo,a,cor,angX=0) {
-  // Rotação em Y (horizontal) e X (vertical)
-  const cosY=Math.cos(a),    sinY=Math.sin(a);
-  const cosX=Math.cos(angX), sinX=Math.sin(angX);
+function draw3D(ctx,tipo,a,cor,angX=0){
+  const cosY=Math.cos(a),sinY=Math.sin(a),cosX=Math.cos(angX),sinX=Math.sin(angX);
   ctx.lineWidth=1.8;
-
-  // Projeção 3D com rotação em dois eixos
-  const p=(x,y,z)=>{
-    // Rotação Y
-    const x1 = x*cosY - z*sinY;
-    const z1 = x*sinY + z*cosY;
-    // Rotação X
-    const y2 = y*cosX - z1*sinX;
-    const z2 = y*sinX + z1*cosX;
-    return { px: x1*58, py: -y2*58 + z2*12 };
-  };
-  const l=(A,B,c,o=.88)=>{ ctx.beginPath(); ctx.strokeStyle=c+Math.floor(o*255).toString(16).padStart(2,'0'); ctx.moveTo(A.px,A.py); ctx.lineTo(B.px,B.py); ctx.stroke(); };
-  const fc=(pts,c,o=.2)=>{ ctx.beginPath(); ctx.moveTo(pts[0].px,pts[0].py); pts.slice(1).forEach(pt=>ctx.lineTo(pt.px,pt.py)); ctx.closePath(); ctx.fillStyle=c+Math.floor(o*255).toString(16).padStart(2,'0'); ctx.fill(); };
+  const p=(x,y,z)=>{const x1=x*cosY-z*sinY,z1=x*sinY+z*cosY,y2=y*cosX-z1*sinX,z2=y*sinX+z1*cosX;return{px:x1*58,py:-y2*58+z2*12};};
   const E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  const l=(A,B,c,o=.88)=>{ctx.beginPath();ctx.strokeStyle=c+Math.floor(o*255).toString(16).padStart(2,'0');ctx.moveTo(A.px,A.py);ctx.lineTo(B.px,B.py);ctx.stroke();};
+  const fc=(pts,c,o=.2)=>{ctx.beginPath();ctx.moveTo(pts[0].px,pts[0].py);pts.slice(1).forEach(pt=>ctx.lineTo(pt.px,pt.py));ctx.closePath();ctx.fillStyle=c+Math.floor(o*255).toString(16).padStart(2,'0');ctx.fill();};
   if(tipo==='edificacao'){
     [[0,.5,1,1],[.5,.4,.85,.85],[.9,.35,.6,.6]].forEach(([y,h,w,d],i)=>{
       const v=[p(-w/2,y,-d/2),p(w/2,y,-d/2),p(w/2,y,d/2),p(-w/2,y,d/2),p(-w/2,y+h,-d/2),p(w/2,y+h,-d/2),p(w/2,y+h,d/2),p(-w/2,y+h,d/2)];
-      fc([v[0],v[1],v[5],v[4]],cor,.18+i*.04); fc([v[4],v[5],v[6],v[7]],cor,.3+i*.04);
+      fc([v[0],v[1],v[5],v[4]],cor,.18+i*.04);fc([v[4],v[5],v[6],v[7]],cor,.3+i*.04);
       E.forEach(([a,b])=>l(v[a],v[b],cor));
     });
   } else {
     const s=.72;
     const v=[p(-s,-s,-s),p(s,-s,-s),p(s,-s,s),p(-s,-s,s),p(-s,s,-s),p(s,s,-s),p(s,s,s),p(-s,s,s)];
-    [[0,1,2,3],[4,5,6,7],[0,1,5,4],[1,2,6,5]].forEach((f,i)=>fc(f.map(i=>v[i]),cor,.08+i*.04));
+    [[0,1,2,3],[4,5,6,7],[0,1,5,4],[1,2,6,5]].forEach((f,i)=>fc(f.map(j=>v[j]),cor,.08+i*.04));
     E.forEach(([a,b])=>l(v[a],v[b],cor));
   }
 }
@@ -1342,22 +834,70 @@ function draw3D(ctx,tipo,a,cor,angX=0) {
 // ══════════════════════════════════════════════
 // MARCADOR
 // ══════════════════════════════════════════════
-function verMarcador() {
+function verMarcador(){
   document.getElementById('tela-marc').classList.add('ativo');
-  const cv=document.getElementById('canvas-marc'), ctx=cv.getContext('2d'), s=200;
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,s,s);
+  const cv=document.getElementById('canvas-marc'),ctx=cv.getContext('2d'),s=200;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,s,s);
   ctx.fillStyle='#000';
-  ctx.fillRect(0,0,s,28); ctx.fillRect(0,s-28,s,28); ctx.fillRect(0,0,28,s); ctx.fillRect(s-28,0,28,s);
-  const pad=34, cs=(s-pad*2)/8;
+  ctx.fillRect(0,0,s,28);ctx.fillRect(0,s-28,s,28);ctx.fillRect(0,0,28,s);ctx.fillRect(s-28,0,28,s);
+  const pad=34,cs=(s-pad*2)/8;
   const bits=[[1,1,1,1,1,1,1,1],[1,0,1,0,0,1,0,1],[1,1,0,1,1,0,1,1],[1,0,1,0,0,1,0,1],[1,0,1,0,0,1,0,1],[1,1,0,1,1,0,1,1],[1,0,1,0,0,1,0,1],[1,1,1,1,1,1,1,1]];
-  bits.forEach((r,ri)=>r.forEach((b,ci)=>{ if(b) ctx.fillRect(pad+ci*cs,pad+ri*cs,cs,cs); }));
-  ctx.font='bold 8px monospace'; ctx.textAlign='center'; ctx.fillText('HIRO · PEDREIRO CIVIL 3D',s/2,s-10);
+  bits.forEach((r,ri)=>r.forEach((b,ci)=>{if(b)ctx.fillRect(pad+ci*cs,pad+ri*cs,cs,cs);}));
+  ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillText('HIRO · PEDREIRO CIVIL 3D',s/2,s-10);
 }
 
 // ══════════════════════════════════════════════
-// INTEGRAÇÃO — TROCAR PAINEL
+// GERADOR DE MARCADOR
 // ══════════════════════════════════════════════
-function trocarSW(el, sw) {
+function selTam(el,cm){
+  document.querySelectorAll('.btn-tam').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); tamMarcador=cm;
+  toast(`📐 Tamanho: ${cm} cm`);
+}
+function desenharMarcadorGerador(){
+  const cv=document.getElementById('canvas-gerador');
+  if(!cv)return;
+  const ctx=cv.getContext('2d'),s=300;
+  cv.width=s;cv.height=s;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,s,s);
+  const borda=30;
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,s,borda);ctx.fillRect(0,s-borda,s,borda);ctx.fillRect(0,0,borda,s);ctx.fillRect(s-borda,0,borda,s);
+  const pad=borda+4,inner=s-pad*2,cell=inner/8;
+  const bits=[[1,1,1,1,1,1,1,1],[1,0,1,0,0,1,0,1],[1,1,0,1,1,0,1,1],[1,0,1,0,0,1,0,1],[1,0,1,0,0,1,0,1],[1,1,0,1,1,0,1,1],[1,0,1,0,0,1,0,1],[1,1,1,1,1,1,1,1]];
+  ctx.fillStyle='#000';
+  bits.forEach((r,ri)=>r.forEach((b,ci)=>{if(b)ctx.fillRect(pad+ci*cell,pad+ri*cell,cell,cell);}));
+  ctx.font='bold 10px monospace';ctx.textAlign='center';
+  ctx.fillText(`HIRO · PEDREIRO CIVIL 3D · ${tamMarcador}cm`,s/2,s-8);
+}
+function imprimirMarcador(){
+  const cv=document.getElementById('canvas-gerador'),imgUrl=cv.toDataURL('image/png');
+  const cmPx=Math.round(tamMarcador*37.8);
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Marcador Pedreiro Civil 3D</title>
+  <style>*{margin:0;padding:0;}body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;background:#fff;padding:20px;}
+  h2{font-size:14px;letter-spacing:2px;margin-bottom:4px;color:#111;}p{font-size:11px;color:#666;margin-bottom:16px;}
+  img{width:${cmPx}px;height:${cmPx}px;border:1px solid #eee;display:block;margin:0 auto 12px;}
+  @media print{.np{display:none!important;}}</style></head>
+  <body><h2>MARCADOR AR — PEDREIRO CIVIL 3D</h2><p>Tamanho: ${tamMarcador}×${tamMarcador} cm</p>
+  <img src="${imgUrl}"/>
+  <button class="np" onclick="window.print()" style="padding:10px 24px;background:#111;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin:8px;">🖨 IMPRIMIR</button>
+  <button class="np" onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin:8px;">FECHAR</button>
+  </body></html>`);
+  w.document.close();
+  toast('🖨 Página de impressão aberta!','green');
+}
+function baixarMarcadorPNG(){
+  const cv=document.getElementById('canvas-gerador'),a=document.createElement('a');
+  a.href=cv.toDataURL('image/png');
+  a.download=`marcador-hiro-${tamMarcador}cm.png`;
+  a.click(); toast('⬇ Imagem baixada!','green');
+}
+
+// ══════════════════════════════════════════════
+// INTEGRAÇÃO
+// ══════════════════════════════════════════════
+function trocarSW(el,sw){
   document.querySelectorAll('.sw-tab').forEach(t=>t.classList.remove('ativa'));
   document.querySelectorAll('.painel').forEach(p=>p.classList.remove('ativo'));
   el.classList.add('ativa');
@@ -1370,341 +910,79 @@ function trocarSW(el, sw) {
 function dov(e){e.preventDefault();document.getElementById('drop-obj').classList.add('over');}
 function dop(e){e.preventDefault();document.getElementById('drop-obj').classList.remove('over');const f=e.dataTransfer?.files[0];if(f)processarOBJ(f);}
 function converterOBJ(inp){if(inp.files[0])processarOBJ(inp.files[0]);}
-
-function prog(p,msg){
-  document.getElementById('prog-bar').style.display='block';
-  document.getElementById('prog-fill').style.width=p+'%';
-  document.getElementById('conv-msg').textContent=msg;
-}
-
-function processarOBJ(file) {
-  document.getElementById('drop-lbl').innerHTML=`⏳ Convertendo <strong>${file.name}</strong>...`;
-  document.getElementById('btn-dl-glb').style.display='none'; glbData=null;
-  prog(10,'Lendo arquivo OBJ...');
+function prog(p,msg){document.getElementById('prog-bar').style.display='block';document.getElementById('prog-fill').style.width=p+'%';document.getElementById('conv-msg').textContent=msg;}
+function processarOBJ(file){
+  document.getElementById('drop-lbl').innerHTML=`⏳ <strong>${file.name}</strong>...`;
+  document.getElementById('btn-dl-glb').style.display='none';glbData=null;
+  prog(10,'Lendo arquivo...');
   const r=new FileReader();
-  r.onload=e=>{
-    prog(35,'Parseando geometria...');
-    setTimeout(()=>{
-      try {
-        glbData=objToGlb(e.target.result);
-        prog(100,`✅ Pronto! ${(glbData.byteLength/1024).toFixed(1)} KB`);
-        document.getElementById('btn-dl-glb').style.display='flex';
-        document.getElementById('drop-lbl').innerHTML=`✅ <strong>${file.name}</strong>`;
-        toast('✅ OBJ convertido para GLB!','green');
-      } catch(err){prog(0,'❌ Erro: '+err.message);toast('❌ Falha na conversão','orange');}
-    },350);
-  };
+  r.onload=e=>{prog(35,'Parseando geometria...');setTimeout(()=>{
+    try{glbData=objToGlb(e.target.result);prog(100,`✅ ${(glbData.byteLength/1024).toFixed(1)} KB`);document.getElementById('btn-dl-glb').style.display='flex';document.getElementById('drop-lbl').innerHTML=`✅ <strong>${file.name}</strong>`;toast('✅ Convertido!','green');}
+    catch(err){prog(0,'❌ '+err.message);toast('❌ Falha','orange');}
+  },350);};
   r.readAsText(file);
 }
-
-function objToGlb(txt) {
+function objToGlb(txt){
   prog(50,'Extraindo vértices...');
-  const lines=txt.split('\n'), vs=[], vns=[], vts=[];
-  const pos=[], nrm=[], uv=[];
+  const lines=txt.split('\n'),vs=[],vns=[],vts=[];
+  const pos=[],nrm=[],uv=[];
   for(const l of lines){const p=l.trim().split(/\s+/);if(p[0]==='v')vs.push([+p[1],+p[2],+p[3]]);else if(p[0]==='vn')vns.push([+p[1],+p[2],+p[3]]);else if(p[0]==='vt')vts.push([+p[1],+p[2]||0]);}
   prog(65,'Processando faces...');
-  for(const l of lines){
-    const p=l.trim().split(/\s+/);
-    if(p[0]!=='f')continue;
-    const idx=p.slice(1).map(s=>s.split('/').map(n=>n?parseInt(n)-1:0));
-    for(let i=1;i<idx.length-1;i++){
-      for(const [vi,ti,ni] of [idx[0],idx[i],idx[i+1]]){
-        pos.push(...(vs[vi]||[0,0,0]));
-        nrm.push(...(vns[ni]||[0,1,0]));
-        uv.push(...(vts[ti]||[0,0]));
-      }
-    }
-  }
+  for(const l of lines){const p=l.trim().split(/\s+/);if(p[0]!=='f')continue;const idx=p.slice(1).map(s=>s.split('/').map(n=>n?parseInt(n)-1:0));for(let i=1;i<idx.length-1;i++){for(const[vi,ti,ni]of[idx[0],idx[i],idx[i+1]]){pos.push(...(vs[vi]||[0,0,0]));nrm.push(...(vns[ni]||[0,1,0]));uv.push(...(vts[ti]||[0,0]));}}}
   prog(80,'Gerando GLB...');
-  const N=pos.length/3;
-  const pA=new Float32Array(pos), nA=new Float32Array(nrm), uA=new Float32Array(uv);
-  let mn=[Infinity,Infinity,Infinity], mx=[-Infinity,-Infinity,-Infinity];
+  const N=pos.length/3,pA=new Float32Array(pos),nA=new Float32Array(nrm),uA=new Float32Array(uv);
+  let mn=[Infinity,Infinity,Infinity],mx=[-Infinity,-Infinity,-Infinity];
   for(let i=0;i<pos.length;i+=3){mn[0]=Math.min(mn[0],pos[i]);mn[1]=Math.min(mn[1],pos[i+1]);mn[2]=Math.min(mn[2],pos[i+2]);mx[0]=Math.max(mx[0],pos[i]);mx[1]=Math.max(mx[1],pos[i+1]);mx[2]=Math.max(mx[2],pos[i+2]);}
-  const pB=pA.byteLength, nB=nA.byteLength, uB=uA.byteLength, tot=pB+nB+uB;
-  const pad4=n=>(4-n%4)%4;
-  const binPad=tot+pad4(tot);
+  const pB=pA.byteLength,nB=nA.byteLength,uB=uA.byteLength,tot=pB+nB+uB;
+  const pad4=n=>(4-n%4)%4,binPad=tot+pad4(tot);
   const json={asset:{version:'2.0',generator:'Pedreiro Civil 3D'},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0}],meshes:[{primitives:[{attributes:{POSITION:0,NORMAL:1,TEXCOORD_0:2},material:0,mode:4}]}],accessors:[{bufferView:0,byteOffset:0,componentType:5126,count:N,type:'VEC3',min:mn,max:mx},{bufferView:1,byteOffset:0,componentType:5126,count:N,type:'VEC3'},{bufferView:2,byteOffset:0,componentType:5126,count:N,type:'VEC2'}],bufferViews:[{buffer:0,byteOffset:0,byteLength:pB,target:34962},{buffer:0,byteOffset:pB,byteLength:nB,target:34962},{buffer:0,byteOffset:pB+nB,byteLength:uB,target:34962}],buffers:[{byteLength:binPad}],materials:[{name:'Mat',pbrMetallicRoughness:{baseColorFactor:[.55,.72,.85,1],metallicFactor:.1,roughnessFactor:.7}}]};
-  let js=JSON.stringify(json); while(js.length%4!==0)js+=' ';
-  const jb=new TextEncoder().encode(js);
-  const bi=new Uint8Array(binPad);
-  bi.set(new Uint8Array(pA.buffer),0); bi.set(new Uint8Array(nA.buffer),pB); bi.set(new Uint8Array(uA.buffer),pB+nB);
-  const total=12+8+jb.length+8+binPad, buf=new ArrayBuffer(total), dv=new DataView(buf);
+  let js=JSON.stringify(json);while(js.length%4!==0)js+=' ';
+  const jb=new TextEncoder().encode(js),bi=new Uint8Array(binPad);
+  bi.set(new Uint8Array(pA.buffer),0);bi.set(new Uint8Array(nA.buffer),pB);bi.set(new Uint8Array(uA.buffer),pB+nB);
+  const total=12+8+jb.length+8+binPad,buf=new ArrayBuffer(total),dv=new DataView(buf);
   let o=0;
-  dv.setUint32(o,0x46546C67,true);o+=4; dv.setUint32(o,2,true);o+=4; dv.setUint32(o,total,true);o+=4;
-  dv.setUint32(o,jb.length,true);o+=4; dv.setUint32(o,0x4E4F534A,true);o+=4;
+  dv.setUint32(o,0x46546C67,true);o+=4;dv.setUint32(o,2,true);o+=4;dv.setUint32(o,total,true);o+=4;
+  dv.setUint32(o,jb.length,true);o+=4;dv.setUint32(o,0x4E4F534A,true);o+=4;
   new Uint8Array(buf,o,jb.length).set(jb);o+=jb.length;
-  dv.setUint32(o,binPad,true);o+=4; dv.setUint32(o,0x004E4942,true);o+=4;
+  dv.setUint32(o,binPad,true);o+=4;dv.setUint32(o,0x004E4942,true);o+=4;
   new Uint8Array(buf,o,binPad).set(bi);
   return buf;
 }
-
 function downloadGLB(){
   if(!glbData)return;
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([glbData],{type:'model/gltf-binary'}));
-  a.download='modelo.glb'; a.click(); toast('⬇ Download iniciado!','green');
+  a.download='modelo.glb';a.click();toast('⬇ Download!','green');
 }
 
 // ══════════════════════════════════════════════
-// CACHE STATUS
+// CACHE / OFFLINE
 // ══════════════════════════════════════════════
 function atualizarCache(){
-  const ok=('caches' in window);
-  document.getElementById('ci-cache').innerHTML=`<span class="${ok?'ok':'nao'}">${ok?'✓ Disponível':'✗ Não suportado'}</span>`;
   document.getElementById('ci-proj').textContent=projetos.length;
-  document.getElementById('ci-mod').textContent=projetos.filter(p=>p.modeloUrl).length;
+  document.getElementById('ci-mod').textContent=projetos.filter(p=>p.temModelo).length;
   let tot=0;
   try{for(const k in localStorage)if(Object.prototype.hasOwnProperty.call(localStorage,k))tot+=(localStorage[k].length+k.length)*2;}catch(e){}
   const kb=tot/1024;
   document.getElementById('ci-esp').textContent=kb>1024?`${(kb/1024).toFixed(1)} MB`:`${kb.toFixed(0)} KB`;
 }
 atualizarCache();
-
 async function limparCache(){
-  if(!confirm('Apagar todos os projetos e modelos salvos?'))return;
-  projetos=[]; localStorage.removeItem('arc_v3');
-  // Limpa também o IndexedDB
-  try {
-    const database = await abrirDB();
-    const tx = database.transaction(STORE_NOME,'readwrite');
-    tx.objectStore(STORE_NOME).clear();
-  } catch(e){}
-  if('caches' in window) caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
-  renderProj(); atualizarCache(); toast('🗑 Cache limpo','orange');
+  if(!confirm('Apagar todos os projetos e modelos?'))return;
+  projetos=[];localStorage.removeItem('pc3d_v1');
+  try{const d=await abrirDB();const tx=d.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();}catch(e){}
+  if('caches' in window)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+  renderProj();atualizarCache();toast('🗑 Cache limpo','orange');
 }
 
-// ══════════════════════════════════════════════
-// PWA INSTALL
-// ══════════════════════════════════════════════
-// ══════════════════════════════════════════════
-// DELETAR PROJETO
-// ══════════════════════════════════════════════
-async function deletarProjeto(idx) {
-  const p = projetos[idx];
-  if (!confirm(`Deletar o projeto "${p.nome}"?`)) return;
-
-  // Remove o modelo do IndexedDB se existir
-  if (p.modeloId) {
-    try { await deletarModeloDB(p.modeloId); } catch(e) {}
-  }
-
-  // Remove da lista e salva
-  projetos.splice(idx, 1);
-  localStorage.setItem('arc_v3', JSON.stringify(projetos));
-  renderProj();
-  atualizarCache();
-  toast('🗑 Projeto deletado', 'orange');
-}
-
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pwaPrompt=e;toast('📲 Pedreiro Civil 3D disponível para instalar','green');});
+// PWA
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();pwaPrompt=e;});
 function instalar(){
   if(pwaPrompt){pwaPrompt.prompt();pwaPrompt.userChoice.then(r=>{if(r.outcome==='accepted')toast('✅ App instalado!','green');pwaPrompt=null;});return;}
   const ua=navigator.userAgent;
-  if(/iPhone|iPad/.test(ua)) alert('No Safari: toque 📤 → "Adicionar à Tela de Início"');
-  else if(/Android/.test(ua)) alert('No Chrome: menu ⋮ → "Adicionar à tela inicial"');
-  else alert('No Chrome Desktop: clique ⊕ na barra de endereço');
-}
-
-// ══════════════════════════════════════════════
-// CONTROLE DE ESCALA DO MODELO AR
-// ══════════════════════════════════════════════
-let escalaAtual = 0.05; // valor padrão inicial
-
-// A-Frame não permite alterar atributos da cena via DOM depois de montada.
-// A solução é salvar o blobUrl atual e remontar a cena com a nova escala.
-let blobUrlAtual = null;
-
-function ajustarEscala(fator) {
-  escalaAtual = Math.max(0.001, Math.min(50, escalaAtual * fator));
-
-  const display = escalaAtual < 0.01
-    ? escalaAtual.toFixed(4)
-    : escalaAtual < 1
-    ? escalaAtual.toFixed(3)
-    : escalaAtual.toFixed(2);
-
-  document.getElementById('escala-val').textContent = display;
-
-  // Remonta a cena com a nova escala
-  remontarComEscala();
-  toast(`📐 Escala: ${display}`, 'cyan');
-}
-
-function resetEscala() {
-  escalaAtual = 0.05;
-  document.getElementById('escala-val').textContent = '0.05';
-  remontarComEscala();
-  toast('↺ Escala resetada', 'cyan');
-}
-
-function remontarComEscala() {
-  if (!blobUrlAtual || !projetoAR) return;
-  // Remove a cena atual e remonta com nova escala
-  document.getElementById('ar-container').innerHTML = '';
-  setTimeout(() => montarCena(projetoAR, blobUrlAtual), 100);
-}
-
-// ══════════════════════════════════════════════
-// GERADOR DE MARCADOR
-// ══════════════════════════════════════════════
-let tamMarcador = 10; // cm selecionado
-
-function selTam(el, cm) {
-  document.querySelectorAll('.btn-tam').forEach(b => b.classList.remove('sel'));
-  el.classList.add('sel');
-  tamMarcador = cm;
-  toast('📐 Tamanho selecionado: ' + cm + ' cm');
-}
-
-function desenharMarcadorGerador() {
-  const cv = document.getElementById('canvas-gerador');
-  if (!cv) return;
-  const ctx = cv.getContext('2d');
-  const s = 300;
-  cv.width = s; cv.height = s;
-
-  // Fundo branco
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, s, s);
-
-  // Borda preta grossa (obrigatória para o AR.js detectar)
-  const borda = 30;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, s, borda);        // topo
-  ctx.fillRect(0, s - borda, s, borda); // baixo
-  ctx.fillRect(0, 0, borda, s);        // esquerda
-  ctx.fillRect(s - borda, 0, borda, s); // direita
-
-  // Área interna do padrão Hiro
-  const pad = borda + 4;
-  const inner = s - pad * 2;
-  const cell = inner / 8;
-
-  // Matriz de bits do marcador Hiro (padrão oficial AR.js)
-  const bits = [
-    [1,1,1,1,1,1,1,1],
-    [1,0,1,0,0,1,0,1],
-    [1,1,0,1,1,0,1,1],
-    [1,0,1,0,0,1,0,1],
-    [1,0,1,0,0,1,0,1],
-    [1,1,0,1,1,0,1,1],
-    [1,0,1,0,0,1,0,1],
-    [1,1,1,1,1,1,1,1],
-  ];
-
-  ctx.fillStyle = '#000';
-  bits.forEach((row, r) => {
-    row.forEach((bit, c) => {
-      if (bit) ctx.fillRect(pad + c * cell, pad + r * cell, cell, cell);
-    });
-  });
-
-  // Label com informações de impressão
-  ctx.fillStyle = '#000';
-  ctx.font = 'bold 10px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('HIRO MARKER · AR CIVIL v3 · ' + tamMarcador + 'cm', s / 2, s - 8);
-}
-
-function imprimirMarcador() {
-  const cv = document.getElementById('canvas-gerador');
-  const imgUrl = cv.toDataURL('image/png');
-  const cmPx = Math.round(tamMarcador * 37.8); // 1cm ≈ 37.8px a 96dpi
-
-  const w = window.open('', '_blank');
-  w.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Marcador AR Civil</title>
-      <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:Arial,sans-serif; background:#fff; padding:20px; }
-        .wrap { text-align:center; }
-        h2 { font-size:14px; letter-spacing:2px; margin-bottom:4px; color:#111; }
-        p  { font-size:11px; color:#666; margin-bottom:16px; }
-        img { width:${cmPx}px; height:${cmPx}px; border:1px solid #eee; display:block; margin:0 auto 12px; }
-        .info { font-size:10px; color:#999; margin-top:8px; }
-        @media print {
-          body { margin:0; padding:1cm; }
-          .no-print { display:none !important; }
-          img { width:${cmPx}px; height:${cmPx}px; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="wrap">
-        <h2>MARCADOR AR — PADRÃO HIRO</h2>
-        <p>Tamanho: ${tamMarcador}×${tamMarcador} cm · Cole na prancha do projeto</p>
-        <img src="${imgUrl}" />
-        <p class="info">Pedreiro Civil 3D · Compatível com AR.js · Tamanho mínimo recomendado: 8×8 cm</p>
-        <br>
-        <button class="no-print" onclick="window.print()" style="padding:10px 24px;background:#111;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px;">🖨 IMPRIMIR</button>
-        <button class="no-print" onclick="window.close()" style="padding:10px 24px;background:#eee;color:#333;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px;margin-left:8px;">FECHAR</button>
-      </div>
-    </body>
-    </html>
-  `);
-  w.document.close();
-  toast('🖨 Página de impressão aberta!', 'green');
-}
-
-function baixarMarcadorPNG() {
-  const cv = document.getElementById('canvas-gerador');
-  const a = document.createElement('a');
-  a.href = cv.toDataURL('image/png');
-  a.download = 'marcador-ar-hiro-' + tamMarcador + 'cm.png';
-  a.click();
-  toast('⬇ Imagem baixada!', 'green');
-}
-
-// Renderiza o marcador ao entrar na aba
-const _irParaOriginal = irPara;
-
-// ══════════════════════════════════════════════
-// TESTE DIRETO DE CÂMERA
-// ══════════════════════════════════════════════
-async function testarCamera() {
-  const instr = document.getElementById('instr-ar');
-  instr.innerHTML = '⏳ <strong>Testando câmera...</strong>';
-
-  try {
-    // Testa câmera traseira diretamente
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: 'environment' } },
-      audio: false
-    });
-
-    // Cria um video element para mostrar o feed direto
-    const container = document.getElementById('ar-container');
-    container.innerHTML = '';
-
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.muted = true;
-    video.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:910;';
-    container.appendChild(video);
-
-    instr.innerHTML = '✅ <strong>Câmera funcionando!</strong> Toque em DEMO para AR';
-    toast('✅ Câmera OK! Agora tente o AR', 'green');
-
-    // Depois de 3 segundos, para o teste e remonta o AR
-    setTimeout(() => {
-      stream.getTracks().forEach(t => t.stop());
-      container.innerHTML = '';
-      if (projetoAR) {
-        instr.innerHTML = 'Aponte para o <strong>marcador impresso</strong>';
-        montarCena(projetoAR, blobUrlAtual);
-      }
-    }, 3000);
-
-  } catch(err) {
-    instr.innerHTML = '❌ <strong>Câmera bloqueada:</strong> ' + err.message;
-    toast('❌ ' + err.message, 'orange');
-    console.error('[Camera Test]', err);
-  }
+  if(/iPhone|iPad/.test(ua))alert('No Safari: 📤 → "Adicionar à Tela de Início"');
+  else if(/Android/.test(ua))alert('No Chrome: ⋮ → "Adicionar à tela inicial"');
+  else alert('No Chrome: clique ⊕ na barra de endereço');
 }
 
 window.addEventListener('resize',()=>{const c=document.getElementById('demo-canvas');if(demoAtivo){c.width=innerWidth;c.height=innerHeight;}});
