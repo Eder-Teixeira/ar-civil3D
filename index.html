@@ -467,8 +467,6 @@ let projetoAR   = null;
 let escalaAtual = 0.05;
 let blobUrlAtual= null;
 let demoInicio  = 0;
-
-const MODELO_EXEMPLO_B64='Z2xURgIAAAAIBQAA1AMAAEpTT057ImFzc2V0IjogeyJ2ZXJzaW9uIjogIjIuMCIsICJnZW5lcmF0b3IiOiAiUGVkcmVpcm8gQ2l2aWwgM0QifSwgInNjZW5lIjogMCwgInNjZW5lcyI6IFt7Im5vZGVzIjogWzBdfV0sICJub2RlcyI6IFt7Im1lc2giOiAwfV0sICJtZXNoZXMiOiBbeyJwcmltaXRpdmVzIjogW3siYXR0cmlidXRlcyI6IHsiUE9TSVRJT04iOiAwLCAiTk9STUFMIjogMX0sICJpbmRpY2VzIjogMiwgIm1hdGVyaWFsIjogMCwgIm1vZGUiOiA0fV19XSwgImFjY2Vzc29ycyI6IFt7ImJ1ZmZlclZpZXciOiAwLCAiYnl0ZU9mZnNldCI6IDAsICJjb21wb25lbnRUeXBlIjogNTEyNiwgImNvdW50IjogOCwgInR5cGUiOiAiVkVDMyIsICJtaW4iOiBbLTAuNSwgLTAuNSwgLTAuNV0sICJtYXgiOiBbMC41LCAwLjUsIDAuNV19LCB7ImJ1ZmZlclZpZXciOiAxLCAiYnl0ZU9mZnNldCI6IDAsICJjb21wb25lbnRUeXBlIjogNTEyNiwgImNvdW50IjogOCwgInR5cGUiOiAiVkVDMyJ9LCB7ImJ1ZmZlclZpZXciOiAyLCAiYnl0ZU9mZnNldCI6IDAsICJjb21wb25lbnRUeXBlIjogNTEyNSwgImNvdW50IjogMzYsICJ0eXBlIjogIlNDQUxBUiJ9XSwgImJ1ZmZlclZpZXdzIjogW3siYnVmZmVyIjogMCwgImJ5dGVPZmZzZXQiOiAwLCAiYnl0ZUxlbmd0aCI6IDk2LCAidGFyZ2V0IjogMzQ5NjJ9LCB7ImJ1ZmZlciI6IDAsICJieXRlT2Zmc2V0IjogOTYsICJieXRlTGVuZ3RoIjogOTYsICJ0YXJnZXQiOiAzNDk2Mn0sIHsiYnVmZmVyIjogMCwgImJ5dGVPZmZzZXQiOiAxOTIsICJieXRlTGVuZ3RoIjogNzIsICJ0YXJnZXQiOiAzNDk2M31dLCAiYnVmZmVycyI6IFt7ImJ5dGVMZW5ndGgiOiAyNjR9XSwgIm1hdGVyaWFscyI6IFt7Im5hbWUiOiAiTWF0ZXJpYWwiLCAicGJyTWV0YWxsaWNSb3VnaG5lc3MiOiB7ImJhc2VDb2xvckZhY3RvciI6IFswLjAsIDAuOSwgMS4wLCAxLjBdLCAibWV0YWxsaWNGYWN0b3IiOiAwLjEsICJyb3VnaG5lc3NGYWN0b3IiOiAwLjd9fV19IAgBAABCSU4AAAAAvwAAAL8AAAC/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAvwAAAD8AAAA/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgD8AAIA/AACAvwAAgD8AAIA/AAABAAIAAgADAAAABAAGAAUABAAHAAYABAAAAAMABAADAAcAAQAFAAYAAQAGAAIAAwACAAYAAwAGAAcABAAFAAEABAABAAAA';
 let tamMarcador = 10;
 
 const TIPOS = {
@@ -665,30 +663,18 @@ async function abrirAR(idx){
 
   escalaAtual=0.05; blobUrlAtual=null;
   document.getElementById('escala-val').textContent='0.05';
+  document.getElementById('escala-hud').style.display='flex';
   
-  // Carrega modelo do IndexedDB ou usa exemplo da pasta models/
   let blobUrl=null;
   if(projetoAR.temModelo&&projetoAR.modeloId){
     try{
       blobUrl=await carregarModeloDB(projetoAR.modeloId);
-      if(blobUrl){
-        toast('✅ Modelo carregado','green');
-        document.getElementById('escala-hud').style.display='flex';
-      } else {
-        toast('⚠ Modelo não encontrado - usando exemplo');
-        blobUrl=URL.createObjectURL(new Blob([Uint8Array.from(atob(MODELO_EXEMPLO_B64),c=>c.charCodeAt(0))],{type:'model/gltf-binary'}));
-        document.getElementById('escala-hud').style.display='flex';
-      }
+      if(blobUrl) toast('✅ Modelo GLB carregado','green');
+      else toast('⚠ Modelo não encontrado','orange');
     }catch(err){
-      toast('⚠ Erro - usando modelo de exemplo','orange');
-      blobUrl=URL.createObjectURL(new Blob([Uint8Array.from(atob(MODELO_EXEMPLO_B64),c=>c.charCodeAt(0))],{type:'model/gltf-binary'}));
-      document.getElementById('escala-hud').style.display='flex';
+      console.warn('Erro ao carregar modelo:',err);
+      toast('⚠ Erro ao carregar','orange');
     }
-  } else {
-    // Sem modelo salvo - carrega exemplo
-    blobUrl=URL.createObjectURL(new Blob([Uint8Array.from(atob(MODELO_EXEMPLO_B64),c=>c.charCodeAt(0))],{type:'model/gltf-binary'}));
-    document.getElementById('escala-hud').style.display='flex';
-    toast('📦 Usando modelo de exemplo','cyan');
   }
   
   montarCena(projetoAR,blobUrl);
